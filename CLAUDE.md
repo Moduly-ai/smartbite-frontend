@@ -78,9 +78,10 @@ smartbite-frontend/
 - **Session Management**: User state persistence
 - **Role-Based Access**: Different interfaces for employees vs owners
 
-**Demo Credentials:**
-- Employee: `John Smith` / PIN: `1234`
-- Owner: `Owner Admin` / PIN: `0000`
+**Live API Credentials:**
+- Employee: `employee-001` / PIN: `employee789`
+- Manager: `manager-001` / PIN: `manager456`
+- Owner: `owner-001` / PIN: `owner123`
 
 ### 2. Cash Reconciliation Process
 
@@ -126,27 +127,32 @@ smartbite-frontend/
 - **Variance Analysis**: Automatic difference calculation
 - **Status Indicators**: Visual feedback for balance accuracy
 
-## API Integration
+## Live API Integration
 
-### Centralized API Client (`src/services/apiClient.js`)
+### Production API: `https://func-smartbite-reconciliation.azurewebsites.net/api`
 
-```javascript
-class ApiClient {
-  // HTTP methods: GET, POST, PUT, DELETE
-  // Timeout handling: 30-second default
-  // Error management: Comprehensive error handling
-  // Authentication: Bearer token support
-  // Headers: Configurable request headers
-}
-```
+### Authentication Service (`src/services/authService.js`)
+- **Endpoint**: `POST /auth/login`
+- **Method**: `login(employeeId, pin)`
+- **Features**: JWT token management, role-based access, session persistence
+- **Fallback**: Mock authentication when API unavailable
+
+### Configuration Service (`src/services/configService.js`)
+- **Endpoint**: `GET /config/system`, `PUT /config/system`
+- **Features**: Dynamic system configuration, validation, caching
+- **Fallback**: Default configuration with localStorage backup
 
 ### Reconciliation Service (`src/services/reconciliationService.js`)
+- **Submit**: `POST /reconciliations` - Submit cash reconciliation data
+- **Retrieve**: `GET /reconciliations` - Get reconciliation history with filtering
+- **Update**: `PUT /reconciliations/{id}` - Update reconciliation status
+- **Sync**: Local storage fallback with automatic sync when API available
+- **Features**: Offline-first approach, pending reconciliation management
 
-**Key Methods:**
-- `submitReconciliation()` - Submit cash reconciliation data
-- `getReconciliations()` - Retrieve reconciliation history
-- `getReconciliation(id)` - Get specific reconciliation
-- `updateReconciliationStatus()` - Manager review functionality
+### Centralized API Client (`src/services/apiClient.js`)
+- **Features**: Bearer token authentication, timeout handling, error management
+- **Methods**: GET, POST, PUT, DELETE with consistent error handling
+- **Security**: Automatic token injection, CORS handling
 
 ### Environment Configuration (`src/config/env.js`)
 
@@ -375,8 +381,15 @@ az staticwebapp create \
 - ✅ Security implementation
 - ✅ Documentation and README
 
-### Current Status
-The SmartBite Frontend is production-ready with comprehensive features, secure deployment pipeline, and proper documentation. The application successfully provides a complete cash reconciliation solution with modern web technologies and best practices.
+### Current Status - Live API Integration Complete ✅
+The SmartBite Frontend is production-ready with **live API integration** to Azure Functions backend. All services are connected to the actual API endpoints with comprehensive fallback mechanisms. The application provides a complete end-to-end cash reconciliation solution with:
+
+- **Live Authentication**: Real user management via API
+- **Dynamic Configuration**: System settings managed through API
+- **Real-time Reconciliation**: Live submission and retrieval of reconciliation data
+- **Owner Management**: Full CRUD operations for system administration
+- **Offline-first Architecture**: Continues working when API is unavailable
+- **Automatic Synchronization**: Local data syncs when connection is restored
 
 ---
 

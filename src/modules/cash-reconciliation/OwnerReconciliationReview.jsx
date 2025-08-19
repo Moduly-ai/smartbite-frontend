@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { reconciliationService } from '../../services/reconciliationService.js';
 
 const OwnerReconciliationReview = () => {
   const [reconciliations, setReconciliations] = useState([]);
@@ -7,9 +8,48 @@ const OwnerReconciliationReview = () => {
   const [editData, setEditData] = useState({});
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
 
-  // Mock data for reconciliations
+  // Load reconciliations from API
   useEffect(() => {
+    loadReconciliations();
+  }, []);
+
+  const loadReconciliations = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const result = await reconciliationService.getReconciliations();
+      
+      if (result.success) {
+        setReconciliations(result.data);
+        
+        // Show sync status if using local fallback
+        if (result.isLocalFallback) {
+          setSyncStatus({
+            type: 'warning',
+            message: 'Showing locally stored data. Server connection unavailable.'
+          });
+        }
+      } else {
+        setError(result.message);
+        // Fallback to mock data if API completely fails
+        loadMockData();
+      }
+    } catch (error) {
+      console.error('Failed to load reconciliations:', error);
+      setError('Failed to load reconciliation data');
+      loadMockData();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadMockData = () => {
     const mockReconciliations = [
       {
         id: '2025-08-18-john-001',
@@ -79,12 +119,45 @@ const OwnerReconciliationReview = () => {
       }
     ];
     setReconciliations(mockReconciliations);
-  }, []);
+  };
+
+  const syncPendingReconciliations = async () => {
+    try {
+      setIsSyncing(true);
+      setSyncStatus(null);
+      
+      const result = await reconciliationService.syncPendingReconciliations();
+      
+      if (result.success) {
+        setSyncStatus({
+          type: 'success',
+          message: result.message
+        });
+        
+        // Reload reconciliations after successful sync
+        await loadReconciliations();
+      } else {
+        setSyncStatus({
+          type: 'error',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      console.error('Failed to sync reconciliations:', error);
+      setSyncStatus({
+        type: 'error',
+        message: 'Failed to sync pending reconciliations'
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
       case 'pending_review': return 'bg-yellow-100 text-yellow-800';
+      case 'pending_sync': return 'bg-blue-100 text-blue-800';
       case 'variance_found': return 'bg-red-100 text-red-800';
       case 'requires_correction': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -113,33 +186,108 @@ const OwnerReconciliationReview = () => {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
-    // Recalculate with new values
-    const expectedBanking = editData.totalSales - editData.eftpos - editData.payouts;
-    const variance = editData.actualBanking - expectedBanking;
-    
-    setReconciliations(prev => prev.map(rec => 
-      rec.id === selectedReconciliation.id 
-        ? {
-            ...rec,
-            formData: { ...rec.formData, ...editData },
-            calculations: {
-              ...rec.calculations,
-              expectedBanking,
-              variance,
-              isBalanced: Math.abs(variance) < 0.01
-            },
-            status: Math.abs(variance) < 0.01 ? 'approved' : 'variance_found'
-          }
-        : rec
-    ));
-    setShowEditModal(false);
+  const handleSaveEdit = async () => {
+    try {
+      // Recalculate with new values
+      const expectedBanking = editData.totalSales - editData.eftpos - editData.payouts;
+      const variance = editData.actualBanking - expectedBanking;
+      const newStatus = Math.abs(variance) < 0.01 ? 'approved' : 'variance_found';
+      
+      // Update via API if possible
+      const result = await reconciliationService.updateReconciliationStatus(
+        selectedReconciliation.id,
+        newStatus,
+        `Updated by manager: ${editData.comments || 'No additional comments'}`
+      );
+      
+      if (result.success) {
+        // Update local state
+        setReconciliations(prev => prev.map(rec => 
+          rec.id === selectedReconciliation.id 
+            ? {
+                ...rec,
+                formData: { ...rec.formData, ...editData },
+                calculations: {
+                  ...rec.calculations,
+                  expectedBanking,
+                  variance,
+                  isBalanced: Math.abs(variance) < 0.01
+                },
+                status: newStatus
+              }
+            : rec
+        ));
+        setSyncStatus({
+          type: 'success',
+          message: 'Reconciliation updated successfully'
+        });
+      } else {
+        // Fallback to local update
+        setReconciliations(prev => prev.map(rec => 
+          rec.id === selectedReconciliation.id 
+            ? {
+                ...rec,
+                formData: { ...rec.formData, ...editData },
+                calculations: {
+                  ...rec.calculations,
+                  expectedBanking,
+                  variance,
+                  isBalanced: Math.abs(variance) < 0.01
+                },
+                status: newStatus,
+                localUpdate: true
+              }
+            : rec
+        ));
+        setSyncStatus({
+          type: 'warning',
+          message: 'Updated locally. Changes will sync when connection is restored.'
+        });
+      }
+      
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to save edit:', error);
+      setSyncStatus({
+        type: 'error',
+        message: 'Failed to save changes'
+      });
+    }
   };
 
-  const handleApprove = (reconciliationId) => {
-    setReconciliations(prev => prev.map(rec =>
-      rec.id === reconciliationId ? { ...rec, status: 'approved' } : rec
-    ));
+  const handleApprove = async (reconciliationId) => {
+    try {
+      const result = await reconciliationService.updateReconciliationStatus(
+        reconciliationId,
+        'approved',
+        'Approved by manager'
+      );
+      
+      if (result.success) {
+        setReconciliations(prev => prev.map(rec =>
+          rec.id === reconciliationId ? { ...rec, status: 'approved' } : rec
+        ));
+        setSyncStatus({
+          type: 'success',
+          message: 'Reconciliation approved successfully'
+        });
+      } else {
+        // Fallback to local update
+        setReconciliations(prev => prev.map(rec =>
+          rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
+        ));
+        setSyncStatus({
+          type: 'warning',
+          message: 'Approved locally. Changes will sync when connection is restored.'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to approve reconciliation:', error);
+      setSyncStatus({
+        type: 'error',
+        message: 'Failed to approve reconciliation'
+      });
+    }
   };
 
   const filteredReconciliations = reconciliations
@@ -150,8 +298,50 @@ const OwnerReconciliationReview = () => {
       return 0;
     });
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading reconciliations...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Status Messages */}
+      {syncStatus && (
+        <div className={`p-4 rounded-lg ${
+          syncStatus.type === 'success' 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : syncStatus.type === 'warning'
+              ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span>{syncStatus.message}</span>
+            <button 
+              onClick={() => setSyncStatus(null)}
+              className="text-current opacity-70 hover:opacity-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+
       {/* Header with Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -161,6 +351,22 @@ const OwnerReconciliationReview = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+            <button
+              onClick={loadReconciliations}
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              {isLoading ? 'Loading...' : 'Refresh'}
+            </button>
+            
+            <button
+              onClick={syncPendingReconciliations}
+              disabled={isSyncing}
+              className="px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              {isSyncing ? 'Syncing...' : 'Sync Pending'}
+            </button>
+            
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -168,6 +374,7 @@ const OwnerReconciliationReview = () => {
             >
               <option value="all">All Status</option>
               <option value="pending_review">Pending Review</option>
+              <option value="pending_sync">Pending Sync</option>
               <option value="variance_found">Variance Found</option>
               <option value="approved">Approved</option>
             </select>
@@ -192,7 +399,12 @@ const OwnerReconciliationReview = () => {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="font-semibold text-gray-900">{reconciliation.employeeName}</h4>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-semibold text-gray-900">{reconciliation.employeeName}</h4>
+                    {reconciliation.localUpdate && (
+                      <span className="w-2 h-2 bg-orange-400 rounded-full" title="Has local changes pending sync"></span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600">{new Date(reconciliation.date).toLocaleDateString()}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(reconciliation.status)}`}>

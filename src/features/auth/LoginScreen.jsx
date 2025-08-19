@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
+import { authService } from '../../services/authService.js';
 
 const LoginScreen = ({ onLogin }) => {
   const [loginType, setLoginType] = useState('employee');
   const [formData, setFormData] = useState({
-    name: '',
-    pin: '',
-    mobile: ''
+    employeeId: '',
+    pin: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Mock data - in real implementation, this would come from API
-  const mockEmployees = [
-    { name: 'John Smith', pin: '1234', mobile: '0412345678', hasReconciliationAccess: true },
-    { name: 'Jane Doe', pin: '5678', mobile: '0423456789', hasReconciliationAccess: false },
-    { name: 'Mike Johnson', pin: '9999', mobile: '0434567890', hasReconciliationAccess: true }
-  ];
-
-  const mockOwner = { name: 'Owner Admin', pin: '0000', mobile: '0401234567' };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,40 +22,15 @@ const LoginScreen = ({ onLogin }) => {
     setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (loginType === 'owner') {
-        // Owner login validation
-        if (formData.name === mockOwner.name && formData.pin === mockOwner.pin) {
-          onLogin({
-            userType: 'owner',
-            name: mockOwner.name,
-            mobile: mockOwner.mobile,
-            loginTime: new Date().toISOString()
-          });
-        } else {
-          setError('Invalid owner credentials');
-        }
+      const result = await authService.login(formData.employeeId, formData.pin);
+      
+      if (result.success) {
+        onLogin(result.user);
       } else {
-        // Employee login validation
-        const employee = mockEmployees.find(emp => 
-          emp.name === formData.name && emp.pin === formData.pin
-        );
-        
-        if (employee) {
-          onLogin({
-            userType: 'employee',
-            name: employee.name,
-            mobile: employee.mobile,
-            hasReconciliationAccess: employee.hasReconciliationAccess,
-            loginTime: new Date().toISOString()
-          });
-        } else {
-          setError('Invalid employee credentials');
-        }
+        setError(result.message || 'Login failed');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -94,7 +61,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('employee');
-                setFormData({ name: '', pin: '', mobile: '' });
+                setFormData({ employeeId: '', pin: '' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -109,7 +76,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('owner');
-                setFormData({ name: '', pin: '', mobile: '' });
+                setFormData({ employeeId: '', pin: '' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -125,15 +92,15 @@ const LoginScreen = ({ onLogin }) => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="form-label">
-                {loginType === 'owner' ? 'Owner Name' : 'Employee Name'}
+                Employee ID
               </label>
               <input
                 type="text"
                 required
                 className="form-input"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder={loginType === 'owner' ? 'Enter owner name' : 'Enter your name'}
+                value={formData.employeeId}
+                onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                placeholder="e.g., employee-001, manager-001, owner-001"
               />
             </div>
 
@@ -146,7 +113,7 @@ const LoginScreen = ({ onLogin }) => {
                 value={formData.pin}
                 onChange={(e) => handleInputChange('pin', e.target.value)}
                 placeholder="Enter your PIN"
-                maxLength="4"
+                maxLength="15"
               />
             </div>
 
@@ -172,14 +139,18 @@ const LoginScreen = ({ onLogin }) => {
           {/* Demo Credentials */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-500 mb-3">Demo Credentials:</p>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-gray-50 p-2 rounded">
-                <p className="font-medium text-gray-700">Owner</p>
-                <p className="text-gray-600">Owner Admin / 0000</p>
-              </div>
+            <div className="grid grid-cols-1 gap-2 text-xs">
               <div className="bg-gray-50 p-2 rounded">
                 <p className="font-medium text-gray-700">Employee</p>
-                <p className="text-gray-600">John Smith / 1234</p>
+                <p className="text-gray-600">employee-001 / employee789</p>
+              </div>
+              <div className="bg-gray-50 p-2 rounded">
+                <p className="font-medium text-gray-700">Manager</p>
+                <p className="text-gray-600">manager-001 / manager456</p>
+              </div>
+              <div className="bg-gray-50 p-2 rounded">
+                <p className="font-medium text-gray-700">Owner</p>
+                <p className="text-gray-600">owner-001 / owner123</p>
               </div>
             </div>
           </div>
