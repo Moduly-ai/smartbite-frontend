@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const API_BASE_URL = 'https://func-smartbite-reconciliation.azurewebsites.net/api';
+import { reconciliationService } from '../../services/reconciliationService.js';
 
 const EmployeeReconciliation = ({ user }) => {
   // Check if employee has reconciliation access
@@ -37,12 +36,12 @@ const EmployeeReconciliation = ({ user }) => {
     payouts: '',
     register1: {
       hundreds: '', fifties: '', twenties: '', tens: '', fives: '',
-      loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '', cents: '' },
+      loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
       coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' }
     },
     register2: {
       hundreds: '', fifties: '', twenties: '', tens: '', fives: '',
-      loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '', cents: '' },
+      loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
       coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' }
     },
     comments: ''
@@ -97,8 +96,7 @@ const EmployeeReconciliation = ({ user }) => {
                  (parseFloat(register.loose.fifties) || 0) +
                  (parseFloat(register.loose.twenties) || 0) +
                  (parseFloat(register.loose.tens) || 0) +
-                 (parseFloat(register.loose.fives) || 0) +
-                 (parseFloat(register.loose.cents) || 0);
+                 (parseFloat(register.loose.fives) || 0);
 
     // Return object with breakdown
     return {
@@ -182,6 +180,22 @@ const EmployeeReconciliation = ({ user }) => {
     }
   };
 
+  const goToStep = (step) => {
+    if (step >= 1 && step <= 4) {
+      setCurrentStep(step);
+    }
+  };
+
+  const getStepTitle = (step) => {
+    const titles = {
+      1: 'Register 1',
+      2: 'Register 2', 
+      3: 'Sales & EFTPOS',
+      4: 'Banking & Review'
+    };
+    return titles[step] || 'Step';
+  };
+
   const submitReconciliation = async () => {
     setIsSubmitting(true);
     setSubmitStatus(null);
@@ -189,24 +203,16 @@ const EmployeeReconciliation = ({ user }) => {
     try {
       const submitData = {
         ...formData,
-        calculations,
-        submittedAt: new Date().toISOString(),
-        status: 'submitted'
+        calculations
       };
 
-      const response = await fetch(`${API_BASE_URL}/reconciliations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-employee-name': user?.name || 'Unknown Employee',
-        },
-        body: JSON.stringify(submitData)
-      });
-
-      const result = await response.json();
+      const result = await reconciliationService.submitReconciliation(
+        submitData, 
+        user?.name || 'Unknown Employee'
+      );
       
       if (result.success) {
-        setSubmitStatus({ type: 'success', message: 'Reconciliation submitted successfully!' });
+        setSubmitStatus({ type: 'success', message: result.message });
         localStorage.removeItem('smartbite-reconciliation');
         
         // Reset form after successful submission
@@ -217,10 +223,10 @@ const EmployeeReconciliation = ({ user }) => {
             eftpos: { terminal1: '', terminal2: '', terminal3: '', terminal4: '', total: '' },
             payouts: '',
             register1: { hundreds: '', fifties: '', twenties: '', tens: '', fives: '',
-              loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '', cents: '' },
+              loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
               coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' } },
             register2: { hundreds: '', fifties: '', twenties: '', tens: '', fives: '',
-              loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '', cents: '' },
+              loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
               coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' } },
             comments: ''
           });
@@ -228,7 +234,7 @@ const EmployeeReconciliation = ({ user }) => {
           setSubmitStatus(null);
         }, 3000);
       } else {
-        throw new Error(result.message || 'Submission failed');
+        throw new Error(result.message || result.error || 'Submission failed');
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -369,24 +375,23 @@ const EmployeeReconciliation = ({ user }) => {
         {/* Loose Coins First */}
         <div>
           <h3 className="text-lg font-medium mb-4">Loose Coins</h3>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
               { label: '$1', key: 'dollars' },
               { label: '50¢', key: 'fifties' },
               { label: '20¢', key: 'twenties' },
               { label: '10¢', key: 'tens' },
-              { label: '5¢', key: 'fives' },
-              { label: 'Cents', key: 'cents' }
+              { label: '5¢', key: 'fives' }
             ].map(({ label, key }) => (
               <div key={key}>
                 <label className="form-label">{label}</label>
                 <input
                   type="number"
-                  step={key === 'cents' ? "0.01" : "1"}
+                  step="1"
                   className="form-input"
                   value={register.loose[key]}
                   onChange={(e) => handleInputChange(`register${registerNum}.loose.${key}`, e.target.value)}
-                  placeholder={key === 'cents' ? "0.00" : "0"}
+                  placeholder="0"
                 />
               </div>
             ))}
@@ -478,22 +483,22 @@ const EmployeeReconciliation = ({ user }) => {
 
           {/* Banking Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Register Banking */}
+            {/* Register Cash */}
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h4 className="text-lg font-semibold text-green-900 mb-3">Cash Banking</h4>
+              <h4 className="text-lg font-semibold text-green-900 mb-3">Cash</h4>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-green-700">Register 1 Banking</span>
-                  <span className="text-lg font-bold text-green-900">${(calculations.register1Banking || 0).toFixed(2)}</span>
+                  <span className="text-sm text-green-700">Register 1 Cash</span>
+                  <span className="text-lg font-bold text-green-900">${(calculations.register1Total || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-green-700">Register 2 Banking</span>
-                  <span className="text-lg font-bold text-green-900">${(calculations.register2Banking || 0).toFixed(2)}</span>
+                  <span className="text-sm text-green-700">Register 2 Cash</span>
+                  <span className="text-lg font-bold text-green-900">${(calculations.register2Total || 0).toFixed(2)}</span>
                 </div>
                 <div className="border-t border-green-300 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold text-green-800">Total Actual Banking</span>
-                    <span className="text-xl font-bold text-green-900">${calculations.actualBanking.toFixed(2)}</span>
+                    <span className="text-base font-semibold text-green-800">Total Cash</span>
+                    <span className="text-xl font-bold text-green-900">${((calculations.register1Total || 0) + (calculations.register2Total || 0)).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -577,21 +582,52 @@ const EmployeeReconciliation = ({ user }) => {
         <div className="flex items-center justify-between">
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                ${step <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+              <button
+                onClick={() => goToStep(step)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                ${step <= currentStep 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                } ${step === currentStep ? 'ring-2 ring-blue-300' : ''}`}
+                title={`Go to ${getStepTitle(step)}`}
+              >
                 {step}
-              </div>
+              </button>
               {step < 4 && (
-                <div className={`w-20 h-1 mx-2 ${step < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`w-20 h-1 mx-2 transition-colors duration-200 ${step < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-2">
-          <span>Register 1</span>
-          <span>Register 2</span>
-          <span>Sales & EFTPOS</span>
-          <span>Banking</span>
+          <button 
+            onClick={() => goToStep(1)}
+            className="hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+            title="Go to Register 1"
+          >
+            Register 1
+          </button>
+          <button 
+            onClick={() => goToStep(2)}
+            className="hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+            title="Go to Register 2"
+          >
+            Register 2
+          </button>
+          <button 
+            onClick={() => goToStep(3)}
+            className="hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+            title="Go to Sales & EFTPOS"
+          >
+            Sales & EFTPOS
+          </button>
+          <button 
+            onClick={() => goToStep(4)}
+            className="hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+            title="Go to Banking & Review"
+          >
+            Banking
+          </button>
         </div>
       </div>
 
