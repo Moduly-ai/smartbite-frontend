@@ -1,665 +1,159 @@
-# SmartBite Frontend - Project Documentation
+# SmartBite Frontend - AI Agent Documentation
 
 ## Project Overview
 
-**SmartBite Frontend** is a React-based cash reconciliation system designed for restaurant management. It provides a comprehensive solution for employees and owners to manage daily cash reconciliation processes with real-time calculations, validation, and secure API integration.
+**SmartBite Frontend** is a React-based cash reconciliation system for restaurant management. Built with React 18, Vite, and Tailwind CSS, it provides comprehensive employee/owner authentication and multi-step cash reconciliation workflows.
 
-## Current System Status (Updated: August 20, 2025)
+## Current System Status (August 2025)
 
-### ✅ RESOLVED: Configuration API Integration Complete
-**Status**: FIXED AND IMPLEMENTED  
-**Impact**: Multi-device configuration synchronization now working  
-**Details**: Updated configService.js with proper authentication headers and API integration
+### ✅ FULLY OPERATIONAL
+- **Authentication**: Employee/Owner login with JWT Bearer tokens
+- **Configuration Management**: Real-time multi-device sync with API integration
+- **Cash Reconciliation**: Complete workflow with validation and calculations
+- **API Integration**: Live backend connection to Azure Functions
+- **Deployment**: Production-ready on Azure Static Web Apps
 
-### Recently Resolved Issues ✅
-- **Employee Login Stuck**: Fixed React hooks ordering violation in EmployeeReconciliation.jsx
-- **Debug Logging**: Cleaned up production code, removed console.log statements
-- **Component Lifecycle**: Proper useEffect execution now works correctly
-- **Configuration API**: Added Bearer token authentication and proper error handling
-- **API Response Format**: Updated to match backend configuration schema
-
-### Active API Endpoints ✅
+### Live API Endpoints ✅
 - **Base URL**: `https://func-smartbite-reconciliation.azurewebsites.net/api`
-- **GET /config/system**: ✅ Working with Bearer authentication
-- **PUT /config/system**: ✅ Working with Bearer authentication  
-- **POST /auth/login**: ✅ Working for token generation
-- **Status**: Fully functional with proper authentication
+- **Authentication**: `POST /auth/login` - JWT token generation
+- **Configuration**: `GET|PUT /config/system` - System settings with Bearer auth
+- **Reconciliation**: `GET|POST /reconciliations` - Cash reconciliation data
+- **Status**: All endpoints operational with proper authentication
 
-## Architecture & Technology Stack
+## Technical Architecture
 
-### Frontend Stack
-- **React 18** - Modern component-based UI framework
-- **Vite** - Fast build tool and development server (localhost:3000)
-- **Tailwind CSS** - Utility-first CSS framework for responsive design
-- **JavaScript (ES6+)** - Modern JavaScript features
+### Stack
+- **React 18** + **Vite** - Component framework with fast build tooling
+- **Tailwind CSS** - Utility-first styling
+- **Azure Functions** - Serverless backend API
+- **Azure Static Web Apps** - Hosting with GitHub Actions CI/CD
 
-### Backend Integration
-- **Azure Functions** - Serverless API backend (needs configuration endpoints)
-- **API Client** - Centralized HTTP client with error handling
-- **Configuration Service** - Manages system config with fallback to localStorage
-
-### Development Tools
-- **ESLint** - Code linting and quality assurance
-- **PostCSS** - CSS processing and optimization
-- **Hot Module Replacement** - Real-time development updates
-
-### Deployment & CI/CD
-- **Azure Static Web Apps** - Serverless hosting platform
-- **GitHub Actions** - Automated CI/CD pipeline
-- **Azure CLI** - Command-line deployment tools
+### Key Services
+- **authService.js** - JWT authentication with Bearer tokens
+- **configService.js** - System configuration with API-first approach
+- **reconciliationService.js** - Cash reconciliation data management
+- **apiClient.js** - Centralized HTTP client with error handling
 
 ## Project Structure
 
 ```
-smartbite-frontend/
-├── .github/workflows/           # GitHub Actions CI/CD
-│   └── azure-static-web-apps.yml
-├── dist/                        # Production build output
-├── public/                      # Static assets
-├── src/                         # Source code
-│   ├── components/              # Reusable UI components
-│   │   ├── layout/
-│   │   │   └── OwnerDashboard.jsx
-│   │   ├── shared/              # Shared components
-│   │   └── ui/                  # UI-specific components
-│   ├── config/                  # Configuration files
-│   │   └── env.js               # Environment configuration
-│   ├── features/                # Feature-specific components
-│   │   └── auth/
-│   │       └── LoginScreen.jsx
-│   ├── modules/                 # Business logic modules
-│   │   └── cash-reconciliation/
-│   │       ├── EmployeeReconciliation.jsx
-│   │       └── OwnerReconciliationReview.jsx
-│   ├── services/                # API and service layer
-│   │   ├── apiClient.js         # Centralized HTTP client
-│   │   ├── reconciliationService.js
-│   │   └── index.js             # Service exports
-│   ├── types/                   # Type definitions
-│   ├── utils/                   # Utility functions
-│   ├── hooks/                   # Custom React hooks
-│   ├── App.jsx                  # Main application component
-│   ├── main.jsx                 # Application entry point
-│   └── index.css                # Global styles
-├── .env                         # Environment variables (local)
-├── .env.example                 # Environment template
-├── .env.production              # Production environment
-├── .gitignore                   # Git ignore rules
-├── API_INVESTIGATION_PROMPT.md  # Historical: API investigation (RESOLVED)
-├── CONFIG_API_REFERENCE.md     # Configuration API quick reference
-├── deploy-azure.sh              # Azure deployment script
-├── staticwebapp.config.json     # Azure Static Web Apps config
-├── package.json                 # Dependencies and scripts
-├── vite.config.js               # Vite configuration
-├── tailwind.config.js           # Tailwind CSS configuration
-├── postcss.config.js            # PostCSS configuration
-├── index.html                   # HTML template
-├── README.md                    # Project documentation
-└── CLAUDE.md                    # This file
+src/
+├── components/layout/           # Layout components
+├── features/auth/               # Authentication (LoginScreen.jsx)
+├── modules/cash-reconciliation/ # Main reconciliation workflows
+│   ├── EmployeeReconciliation.jsx
+│   └── OwnerReconciliationReview.jsx
+├── services/                    # API integration layer
+│   ├── apiClient.js            # HTTP client with Bearer auth
+│   ├── authService.js          # Authentication management
+│   ├── configService.js        # Configuration API
+│   └── reconciliationService.js
+├── config/env.js               # Environment configuration
+└── App.jsx                     # Main app component
 ```
 
-## Current Development State
+## Current Technical State
 
-### Code Health Status ✅
-- **src/modules/cash-reconciliation/EmployeeReconciliation.jsx**: FIXED - React hooks ordering violation resolved
-- **src/services/configService.js**: CLEANED - Production ready, debug logging removed
-- **src/services/authService.js**: CLEANED - Debug logging removed  
-- **src/services/apiClient.js**: STABLE - HTTP client with proper error handling
-- **src/features/auth/LoginScreen.jsx**: CLEANED - Production ready
+### Live Demo Credentials
+- **Employee**: `employee-001` / `employee789`
+- **Manager**: `manager-001` / `manager456`
+- **Owner**: `owner-001` / `owner123`
 
-### Configuration Service Architecture
+### Configuration API Schema
 ```javascript
-// Updated API integration with authentication:
-configService.getSystemConfig() -> {
+// GET /config/system response:
+{
   success: true,
   config: {
-    registers: { count: N, names: [...], reserveAmount: N, enabled: [...] },
-    business: { name: "...", timezone: "...", currency: "...", taxRate: N },
-    reconciliation: { dailyDeadline: "HH:MM", varianceTolerance: N, requireManagerApproval: boolean },
-    posTerminals: { count: N, names: [...], enabled: [...] }
+    registers: { count: 2, names: ["Register 1", "Register 2"], reserveAmount: 400, enabled: [true, true] },
+    business: { name: "SmartBite Restaurant", timezone: "Australia/Sydney", currency: "AUD", taxRate: 0.10 },
+    reconciliation: { dailyDeadline: "23:59", varianceTolerance: 5.00, requireManagerApproval: true },
+    posTerminals: { count: 4, names: ["Terminal 1-4"], enabled: [true, true, true, false] }
   },
-  timestamp: "2025-08-20T15:13:27.102Z"
+  timestamp: "2025-08-19T..."
 }
 
-configService.updateSystemConfig(config) -> {
-  success: true,
-  config: { /* updated config with server timestamps */ },
-  message: "Configuration updated successfully",
-  timestamp: "2025-08-20T15:13:27.102Z"
-}
+// PUT /config/system - automatically cleans server fields before submission
 ```
 
-### Authentication Flow ✅
-1. User logs in → `authService.login()` → receives Bearer token
-2. Token stored in localStorage session data  
-3. `configService` automatically includes `Authorization: Bearer {token}` header
-4. API validates token and processes configuration requests
-5. Owner-only permissions enforced for configuration updates
-
-### Known Issues & Limitations (Historical)
-1. ~~Configuration Sync~~: ✅ Fixed with proper API authentication
-2. ~~API Implementation~~: ✅ Fixed with Bearer token integration  
-3. ~~Error Handling~~: ✅ Enhanced with authentication and permission errors
-4. ~~Cache Strategy~~: ✅ Simplified to use API as primary source
-
-### Core Features
-
-### 1. Authentication System
-- **Dual Login Types**: Employee and Owner authentication
-- **Mock Authentication**: Demo credentials for testing
-- **Session Management**: User state persistence
-- **Role-Based Access**: Different interfaces for employees vs owners
-
-**Live API Credentials:**
-- Employee: `employee-001` / PIN: `employee789`
-- Manager: `manager-001` / PIN: `manager456`
-- Owner: `owner-001` / PIN: `owner123`
-
-### 2. Cash Reconciliation Process
-
-#### Multi-Step Workflow:
-1. **Register 1 Count** - Notes, loose coins, and coin bags/rolls
-2. **Register 2 Count** - Same structure as Register 1
-3. **Sales & EFTPOS** - Daily sales data and payment terminals
-4. **Banking & Review** - Final calculations and submission
-
-#### Key Features:
-- **Real-time Calculations**: Automatic totals and variance calculations
-- **Clickable Progress Steps**: Users can navigate directly to any step
-- **Data Persistence**: Local storage backup for form data
-- **Validation**: Input validation and error handling
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-
-### 3. Cash Counting Components
-
-#### Notes Section:
-- $100, $50, $20, $10, $5 denominations
-- Quantity-based counting
-- Automatic total calculation
-
-#### Loose Coins Section:
-- $1, 50¢, 20¢, 10¢, 5¢ individual coins
-- Count-based input system
-- Real-time totals
-
-#### Coin Bags/Rolls Section:
-- $1 Roll ($20), $2 Roll ($50)
-- 50¢ Roll ($10), 20¢ Roll ($4)
-- 10¢ Roll ($4), 5¢ Roll ($2)
-- Roll quantity tracking
-
-### 4. EFTPOS Integration
-- **4 Terminal Support**: Individual terminal tracking
-- **Automatic Totaling**: Real-time EFTPOS total calculation
-- **Sales Reconciliation**: Integration with daily sales figures
-
-### 5. Banking Calculations
-- **Expected Banking**: Sales - EFTPOS - Payouts
-- **Actual Banking**: Register totals minus $400 reserve per register
-- **Variance Analysis**: Automatic difference calculation
-- **Status Indicators**: Visual feedback for balance accuracy
-
-## Live API Integration
-
-### Production API: `https://func-smartbite-reconciliation.azurewebsites.net/api`
-
-### Authentication Service (`src/services/authService.js`)
-- **Endpoint**: `POST /auth/login`
-- **Method**: `login(employeeId, pin)`
-- **Features**: JWT token management, role-based access, session persistence
-- **Fallback**: Mock authentication when API unavailable
-
-### Configuration Service (`src/services/configService.js`)
-- **Endpoint**: `GET /config/system`, `PUT /config/system`
-- **Features**: Dynamic system configuration, validation, caching
-- **Fallback**: Default configuration with localStorage backup
-
-### Reconciliation Service (`src/services/reconciliationService.js`)
-- **Submit**: `POST /reconciliations` - Submit cash reconciliation data
-- **Retrieve**: `GET /reconciliations` - Get reconciliation history with filtering
-- **Update**: `PUT /reconciliations/{id}` - Update reconciliation status
-- **Sync**: Local storage fallback with automatic sync when API available
-- **Features**: Offline-first approach, pending reconciliation management
-
-### Centralized API Client (`src/services/apiClient.js`)
-- **Features**: Bearer token authentication, timeout handling, error management
-- **Methods**: GET, POST, PUT, DELETE with consistent error handling
-- **Security**: Automatic token injection, CORS handling
-
-### Environment Configuration (`src/config/env.js`)
-
-**Managed Variables:**
-- `VITE_API_BASE_URL` - Backend API endpoint
-- `VITE_API_TIMEOUT` - Request timeout settings
-- `VITE_APP_NAME` - Application name
-- `VITE_APP_VERSION` - Version information
-
-## Deployment & DevOps
-
-### Azure Static Web Apps Configuration
-
-**File: `staticwebapp.config.json`**
-- SPA routing configuration
-- MIME type settings
-- Cache control headers
-- Navigation fallback handling
-
-### GitHub Actions CI/CD Pipeline
-
-**File: `.github/workflows/azure-static-web-apps.yml`**
-
-**Pipeline Features:**
-- **Trigger Events**: Push to main, Pull request events
-- **Build Process**: Node.js 18, npm install, build
-- **Testing**: Automated test execution
-- **Environment Variables**: Secure injection from GitHub Secrets
-- **Deployment**: Automatic deployment to Azure
-- **Preview**: PR preview deployments
-
-**Security Measures:**
-- ✅ No secrets in repository code
-- ✅ Environment variables via GitHub Secrets
-- ✅ Build-time variable injection
-- ✅ Azure API tokens secured
-- ✅ Production environment isolation
-
-### Deployment Options
-
-#### 1. Automated Script Deployment
-```bash
-./deploy-azure.sh
-```
-
-#### 2. Manual Azure CLI Deployment
-```bash
-az staticwebapp create \
-  --name smartbite-frontend \
-  --resource-group smartbite-rg \
-  --source https://github.com/ImranQasim/smartbite-frontend \
-  --location "East US 2" \
-  --branch main \
-  --app-location "/" \
-  --output-location "dist"
-```
-
-#### 3. GitHub Actions (Recommended)
-- Push to main branch triggers deployment
-- Pull requests generate preview URLs
-- Environment variables managed securely
-
-## Development Workflow
-
-### Local Development Setup
-
-1. **Clone Repository**
-   ```bash
-   git clone <repository-url>
-   cd smartbite-frontend
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Configuration**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API configuration
-   ```
-
-4. **Start Development Server**
-   ```bash
-   npm run dev
-   # Opens http://localhost:3000
-   ```
-
-### Available Scripts
-
-- `npm run dev` - Start development server with HMR
-- `npm run build` - Create production build
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run code linting (if configured)
-
-### Code Quality Standards
-
-- **Component Structure**: Functional components with hooks
-- **State Management**: Local state with useState/useEffect
-- **Styling**: Tailwind CSS utility classes
-- **API Calls**: Centralized service layer
-- **Error Handling**: Comprehensive try-catch blocks
-- **Responsive Design**: Mobile-first approach
-
-## Security Implementation
-
-### Frontend Security Measures
-
-1. **Environment Variables**: Sensitive data managed via build-time injection
-2. **API Client**: Centralized HTTP client with timeout and error handling
-3. **Authentication**: Session-based user management
-4. **Input Validation**: Form validation and sanitization
-5. **HTTPS**: Production deployment over secure connections
-
-### Production Security
-
-1. **Azure Static Web Apps**: Built-in DDoS protection and CDN
-2. **GitHub Secrets**: Encrypted environment variable storage
-3. **CI/CD Security**: Automated security scanning capabilities
-4. **API Integration**: Secure communication with backend services
-
-## Performance Optimization
-
-### Build Optimization
-- **Vite Build Tool**: Fast bundling and optimization
-- **Code Splitting**: Automatic chunk splitting for faster loading
-- **Asset Optimization**: CSS and JavaScript minification
-- **Tree Shaking**: Unused code elimination
-
-### Runtime Performance
-- **React 18**: Latest React features and optimizations
-- **Lazy Loading**: Component-level code splitting capabilities
-- **Local Storage**: Client-side data persistence
-- **Responsive Images**: Optimized asset delivery
-
-## API Integration Details
-
-### Backend Communication
-- **Base URL**: Configurable via environment variables
-- **Authentication**: Employee name header for tracking
-- **Error Handling**: Comprehensive error response management
-- **Timeout Management**: 30-second default timeout
-- **Retry Logic**: Built-in retry capabilities
-
-### Data Flow
-1. **User Input**: Form data collection and validation
-2. **Local Storage**: Automatic backup of form state
-3. **API Submission**: Secure transmission to backend
-4. **Response Handling**: Success/error state management
-5. **User Feedback**: Real-time status updates
-
-## Testing Strategy
-
-### Development Testing
-- **Manual Testing**: Comprehensive user flow testing
-- **Browser Testing**: Cross-browser compatibility
-- **Responsive Testing**: Mobile and desktop verification
-- **API Testing**: Backend integration verification
-
-### Production Testing
-- **Build Testing**: Automated build verification
-- **Deployment Testing**: Azure deployment validation
-- **Performance Testing**: Load time and responsiveness
-- **Security Testing**: Vulnerability assessment
-
-## Maintenance & Updates
-
-### Version Control
-- **Git Workflow**: Feature branch development
-- **Pull Requests**: Code review process
-- **Semantic Versioning**: Clear version management
-- **Release Notes**: Change documentation
-
-### Monitoring & Logging
-- **Azure Monitoring**: Built-in Azure Static Web Apps analytics
-- **Error Tracking**: Frontend error logging
-- **Performance Monitoring**: Core Web Vitals tracking
-- **User Analytics**: Usage pattern analysis
-
-## Future Enhancements
-
-### Planned Features
-1. **TypeScript Migration**: Enhanced type safety
-2. **Unit Testing**: Jest and React Testing Library
-3. **E2E Testing**: Playwright or Cypress integration
-4. **PWA Features**: Offline capability and app installation
-5. **Advanced Analytics**: Detailed reporting dashboard
-
-### Technical Improvements
-1. **State Management**: Redux or Zustand for complex state
-2. **Component Library**: Reusable component system
-3. **Internationalization**: Multi-language support
-4. **Accessibility**: WCAG compliance improvements
-5. **Performance**: Advanced optimization techniques
-
-## Support & Documentation
-
-### Getting Help
-- **README.md**: Quick start guide and basic documentation
-- **CLAUDE.md**: Comprehensive project documentation (this file)
-- **Code Comments**: Inline documentation for complex logic
-- **API Documentation**: Service layer documentation
-
-### Contributing Guidelines
-1. **Code Style**: Follow existing patterns and conventions
-2. **Testing**: Include tests for new features
-3. **Documentation**: Update relevant documentation
-4. **Security**: Follow security best practices
-5. **Performance**: Consider performance implications
-
-## Project Milestones
-
-### Completed Features ✅
-- ✅ React application setup with Vite
-- ✅ Tailwind CSS integration and styling
-- ✅ Authentication system (Employee/Owner)
-- ✅ Multi-step cash reconciliation process
-- ✅ Real-time calculations and validation
-- ✅ Clickable progress navigation
-- ✅ Responsive design implementation
-- ✅ Centralized API client architecture
-- ✅ Environment variable management
-- ✅ Azure deployment configuration
-- ✅ GitHub Actions CI/CD pipeline
-- ✅ Security implementation
-- ✅ Documentation and README
-
-### Current Status - Live API Integration Complete ✅
-The SmartBite Frontend is production-ready with **live API integration** to Azure Functions backend. All services are connected to the actual API endpoints with comprehensive fallback mechanisms. The application provides a complete end-to-end cash reconciliation solution with:
-
-- **Live Authentication**: Real user management via API
-- **Dynamic Configuration**: System settings managed through API
-- **Real-time Reconciliation**: Live submission and retrieval of reconciliation data
-- **Owner Management**: Full CRUD operations for system administration
-- **Offline-first Architecture**: Continues working when API is unavailable
-- **Automatic Synchronization**: Local data syncs when connection is restored
+### Authentication Flow
+1. `authService.login(employeeId, pin)` → JWT Bearer token
+2. Token auto-included in all API requests via `apiClient.js`
+3. Role-based access (employee/owner) enforced server-side
+4. Session persistence in localStorage with expiration handling
+
+## Application Features
+
+### 1. Multi-Step Cash Reconciliation
+- **Register Counting**: Notes, coins, and coin rolls with automatic totals
+- **EFTPOS Integration**: Multi-terminal tracking with real-time calculations
+- **Banking Calculations**: Expected vs actual banking with variance analysis
+- **Progress Navigation**: Clickable step progression with data persistence
+- **Responsive Design**: Mobile-first UI with Tailwind CSS
+
+### 2. Dynamic Configuration Management
+- **Register Management**: Add/remove registers (1-10) with automatic name synchronization
+- **POS Terminal Setup**: Up to 20 terminals with location settings
+- **Business Settings**: Company info, timezone, currency, tax rates
+- **Reconciliation Rules**: Daily deadlines, variance tolerance, approval workflows
+- **Real-time Sync**: Owner changes instantly visible across all devices
+
+### 3. Role-Based Authentication
+- **Employee Access**: Cash reconciliation workflow
+- **Owner Access**: Configuration management + reconciliation review
+- **JWT Security**: Bearer token authentication with session persistence
+- **Permission Enforcement**: Server-side role validation
+
+## Development Context
+
+### Service Layer Architecture
+- **authService.js**: JWT authentication with role-based access
+- **configService.js**: System configuration with automatic data cleaning
+- **reconciliationService.js**: Cash reconciliation submission and retrieval
+- **apiClient.js**: Centralized HTTP client with Bearer token injection
+
+### Key Technical Patterns
+- **API-First Approach**: Configuration synced from backend, not localStorage
+- **Automatic Data Cleaning**: Server-side fields removed before PUT requests
+- **Array Normalization**: Register/POS terminal arrays auto-synced with counts
+- **Offline Fallback**: Local storage backup for when API unavailable
+- **Error Handling**: Comprehensive error messages for all failure scenarios
+
+### Environment Variables
+- `VITE_API_BASE_URL`: Backend API endpoint
+- `VITE_API_TIMEOUT`: Request timeout (30000ms)
+- `VITE_APP_NAME`: Application name
+- `VITE_APP_VERSION`: Version information
+
+## Deployment
+
+- **Platform**: Azure Static Web Apps
+- **CI/CD**: GitHub Actions (automated on push to main)
+- **Build**: Vite production build to `dist/` directory
+- **Configuration**: `staticwebapp.config.json` for SPA routing
+
+## Common Issues & Solutions
+
+### React Component Patterns
+- **Hook Ordering**: All useState/useEffect must come before conditional returns
+- **useEffect Dependencies**: Use empty array `[]` for mount-only effects
+- **State Updates**: Prefer functional updates for state based on previous state
+
+### API Integration Issues
+- **Authentication**: Ensure Bearer token included in all authenticated requests
+- **Data Cleaning**: Remove server-side fields before PUT requests to avoid 400 errors
+- **Array Synchronization**: Register/POS terminal counts must match name array lengths
+
+### Configuration Management
+- **API-First**: Always fetch fresh config from API, don't rely on localStorage
+- **Normalization**: Use normalizeConfig() to fix mismatched arrays
+- **Error Handling**: Handle 401/403 for auth issues, 400 for validation errors
+
+### Development Scripts
+- `npm run dev` - Development server (localhost:3000)
+- `npm run build` - Production build
+- `npm run preview` - Preview production build
 
 ---
 
-## CRITICAL BUG - Employee Login Configuration Loading Issue
-
-### Current Problem
-The Employee login successfully authenticates with the API but gets **permanently stuck** on "Loading configuration..." screen. The `EmployeeReconciliation` component never progresses beyond the loading state.
-
-### Detailed Issue Analysis
-
-#### What Works ✅
-- Authentication API call succeeds (200 response)
-- User session stored correctly in localStorage
-- JWT token properly received and stored
-- Component mounts successfully
-- Access check passes (`hasAccess: true`)
-- State shows `isLoadingConfig: true`
-
-#### What Fails ❌
-- **useEffect hook never executes** in EmployeeReconciliation component
-- No configuration API call is made to `/config/system`
-- Component remains in permanent loading state
-- User cannot access reconciliation form
-
-#### Logs Pattern
-```javascript
-// ✅ WORKING: Authentication flow
-LoginScreen: Attempting login...
-AuthService: Login API response: {success: true, user: {...}, token: '...'}
-App: User session set to: {...}
-
-// ✅ WORKING: Component mounting
-EmployeeReconciliation: Component mounted/rendered with user: {...}
-EmployeeReconciliation: Access check result: {hasAccess: true, userType: 'employee'}
-EmployeeReconciliation: isLoadingConfig = true
-EmployeeReconciliation: Showing loading state
-
-// ❌ MISSING: Configuration loading
-// Should see: "EmployeeReconciliation: useEffect running, hasAccess = true"
-// Should see: "ConfigService: Making API call to /config/system"
-// Never happens!
-```
-
-### Root Cause Hypothesis
-The React `useEffect` hook in `EmployeeReconciliation.jsx` is not executing despite component mounting successfully. This suggests:
-1. Component render cycle issue
-2. React lifecycle problem
-3. State dependency issue with `useEffect([hasAccess])`
-4. Possible infinite re-render loop preventing useEffect execution
-
-### Debug Modifications Made (NEED REVERSION)
-**All debug changes should be removed for production:**
-
-#### Files Modified for Debugging:
-1. **`src/App.jsx`**
-   - Added session restoration logging
-   - Added handleLogin logging
-   - **REVERT**: Remove all `console.log` statements
-
-2. **`src/features/auth/LoginScreen.jsx`**
-   - Added pre-populated demo credentials
-   - Added login process logging
-   - **KEEP**: Demo credentials (useful feature)
-   - **REVERT**: Remove debug logging
-
-3. **`src/services/authService.js`**
-   - Added comprehensive login flow logging
-   - **REVERT**: Remove all debug `console.log` statements
-
-4. **`src/services/apiClient.js`**
-   - Added request/response logging
-   - **REVERT**: Remove all debug `console.log` statements
-
-5. **`src/services/configService.js`**
-   - Added API call logging
-   - **REVERT**: Remove all debug `console.log` statements
-
-6. **`src/modules/cash-reconciliation/EmployeeReconciliation.jsx`**
-   - Added extensive component lifecycle logging
-   - Modified useEffect dependency from `[]` to `[hasAccess]`
-   - Added state and access check logging
-   - **REVERT**: Remove all debug logging, fix useEffect
-
-7. **`src/modules/cash-reconciliation/OwnerReconciliationReview.jsx`**
-   - Added safe property access with optional chaining
-   - **KEEP**: Safe property access (bug fix)
-   - **REVERT**: Any debug logging
-
-8. **`staticwebapp.config.json`**
-   - Fixed route configuration for proper static file serving
-   - **KEEP**: This is a necessary fix
-
-### Recommended Solution Approach
-
-#### 1. Simple useEffect Fix (Try First)
-```javascript
-// In EmployeeReconciliation.jsx
-useEffect(() => {
-  const loadConfig = async () => {
-    try {
-## Development History & Context
-
-### August 20, 2025 - Complete Configuration API Integration
-**Issue**: Employee login stuck on "Loading configuration..." with configuration changes not syncing between owner and employee devices.
-
-**Root Causes Identified & Fixed**:
-1. ✅ React hooks ordering violation in EmployeeReconciliation.jsx → Fixed component structure
-2. ✅ Missing Bearer token authentication in configuration requests → Added auth integration
-3. ✅ localStorage caching strategy incompatible with multi-device sync → Replaced with API-first approach
-4. ✅ Configuration service not handling API response format properly → Updated to match backend schema
-
-**Actions Completed**:
-1. ✅ **Fixed React Component**: Moved all useState/useEffect hooks before conditional returns
-2. ✅ **Cleaned Production Code**: Removed debug logging from all service files  
-3. ✅ **Added Authentication**: Bearer token integration for all configuration API calls
-4. ✅ **Enhanced Error Handling**: Specific handling for 401/403 authentication and permission errors
-5. ✅ **Updated Configuration Schema**: Expanded to include business info, POS terminals, and reconciliation settings
-6. ✅ **Created API Documentation**: Complete reference guide for configuration endpoints
-
-**Current State**: ✅ Full end-to-end configuration management working across multiple devices
-
-### API Authentication Implementation
-- **Token Management**: Automatic Bearer token inclusion from stored session
-- **Permission Validation**: Owner-only access enforced for configuration updates  
-- **Session Handling**: Automatic fallback to default config when not authenticated
-- **Error Recovery**: Clear messaging for authentication and permission failures
-
-### Enhanced Configuration Schema
-- **registers**: count, names, reserveAmount, enabled status
-- **business**: name, timezone, currency, taxRate
-- **reconciliation**: dailyDeadline, varianceTolerance, requireManagerApproval  
-- **posTerminals**: count, names, enabled status
-
-### Key Technical Decisions
-- **Authentication-First**: All config operations require valid Bearer token
-- **API-Primary**: Removed localStorage dependency for configuration data
-- **Owner Permissions**: Configuration updates restricted to owner role only
-- **Comprehensive Validation**: Enhanced validation for all configuration fields
-- **Error Transparency**: Clear error messages for authentication and permission issues
-
----
-
-## Technical Reference - React Hooks Fix (Historical)
-
-### Problem Resolution Pattern
-The following pattern was used to fix the React hooks violation:
-
-```javascript
-// ❌ WRONG - Hooks after conditional return
-const SomeComponent = () => {
-  if (condition) return <div>Loading...</div>;
-  
-  const [state, setState] = useState(null); // ❌ Hook after return
-  useEffect(() => {}, []); // ❌ Hook after return
-};
-
-// ✅ CORRECT - All hooks before any returns
-const SomeComponent = () => {
-  const [state, setState] = useState(null); // ✅ Hook at top
-  useEffect(() => {}, []); // ✅ Hook at top
-  
-  if (condition) return <div>Loading...</div>; // ✅ Return after hooks
-};
-```
-
-This pattern ensures React hooks execute in consistent order on every render.
-
-### Production Cleanup Required
-
-#### Files to Clean:
-1. Remove debug logging from all service files
-2. Remove component lifecycle logging
-3. Keep functional fixes (safe property access, static file routing)
-4. Test both employee and owner login flows
-
-#### Verification Steps:
-1. Employee login should proceed directly to reconciliation form
-2. Owner login should proceed to dashboard without crashes
-3. Configuration API should be called (check network tab)
-4. No debug logs in production console
-
-### Current Project State
-- **Authentication**: ✅ Working perfectly with live API
-- **Owner Login**: ✅ Working (after property access fixes)
-- **Employee Login**: ❌ BLOCKED - Stuck on config loading
-- **API Integration**: ✅ All endpoints working
-- **Deployment**: ✅ Successfully deployed to Azure
-
-### Priority Actions
-1. **URGENT**: Fix EmployeeReconciliation useEffect execution
-2. **HIGH**: Remove all debug logging for production
-3. **MEDIUM**: Test end-to-end flows
-4. **LOW**: Performance optimization
-
----
-
-**Last Updated**: August 19, 2025 - CRITICAL BUG DOCUMENTATION
-**Version**: 1.0.0 - DEBUGGING STATE
-**Status**: EMPLOYEE LOGIN BLOCKED - NEEDS IMMEDIATE FIX
-**Deployment**: Azure Static Web Apps (with debug code)
-**CI/CD**: GitHub Actions Configured
+**For AI Agents**: This system is fully operational with live API integration. Focus on maintaining the existing patterns and architecture when making changes.
