@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartBite Config Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 8px 16px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>SmartBite Configuration Debug Tool</h1>
+    
+    <div class="section">
+        <h3>Test Configuration API Endpoints</h3>
+        <button onclick="testGetConfig()">Test GET /config/system</button>
+        <button onclick="testPutConfig()">Test PUT /config/system</button>
+        <button onclick="testAllEndpoints()">Test All API Endpoints</button>
+        <div id="endpoint-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>Current API Configuration</h3>
+        <p>API Base URL: <code>https://func-smartbite-reconciliation.azurewebsites.net/api</code></p>
+        <button onclick="testAPI()">Test API Connection</button>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>Local Storage Data</h3>
+        <button onclick="showLocalStorage()">Show Cached Config</button>
+        <button onclick="clearConfig()">Clear Config Cache</button>
+        <button onclick="clearAllStorage()">Clear All Storage</button>
+        <div id="storage-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>Fetch Fresh Configuration</h3>
+        <button onclick="fetchConfig()">Fetch from API</button>
+        <div id="config-result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://func-smartbite-reconciliation.azurewebsites.net/api';
+
+        async function testGetConfig() {
+            const result = document.getElementById('endpoint-result');
+            result.innerHTML = 'Testing GET /config/system...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/config/system`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = responseText;
+                }
+                
+                if (response.ok) {
+                    result.innerHTML = `<span class="success">✅ GET /config/system works (Status: ${response.status})</span>
+                        <h5>Response:</h5><pre>${JSON.stringify(responseData, null, 2)}</pre>`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ GET /config/system failed (Status: ${response.status})</span>
+                        <h5>Response:</h5><pre>${JSON.stringify(responseData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ GET /config/system error: ${error.message}</span>`;
+            }
+        }
+
+        async function testPutConfig() {
+            const result = document.getElementById('endpoint-result');
+            result.innerHTML = 'Testing PUT /config/system...';
+            
+            const testConfig = {
+                registers: {
+                    count: 2,
+                    names: ['Test Register 1', 'Test Register 2'],
+                    reserveAmount: 400
+                },
+                posTerminals: {
+                    count: 4,
+                    names: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 4'],
+                    enabled: [true, true, false, false]
+                }
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/config/system`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testConfig)
+                });
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = responseText;
+                }
+                
+                if (response.ok) {
+                    result.innerHTML = `<span class="success">✅ PUT /config/system works (Status: ${response.status})</span>
+                        <h5>Response:</h5><pre>${JSON.stringify(responseData, null, 2)}</pre>`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ PUT /config/system failed (Status: ${response.status})</span>
+                        <h5>Response:</h5><pre>${JSON.stringify(responseData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ PUT /config/system error: ${error.message}</span>`;
+            }
+        }
+
+        async function testAllEndpoints() {
+            const result = document.getElementById('endpoint-result');
+            result.innerHTML = 'Testing all known API endpoints...';
+            
+            const endpoints = [
+                { method: 'GET', path: '/config/system', desc: 'Get Configuration' },
+                { method: 'PUT', path: '/config/system', desc: 'Update Configuration' },
+                { method: 'POST', path: '/auth/login', desc: 'Authentication' },
+                { method: 'GET', path: '/reconciliations', desc: 'Get Reconciliations' },
+                { method: 'POST', path: '/reconciliations', desc: 'Submit Reconciliation' }
+            ];
+            
+            let results = '<h4>API Endpoint Test Results:</h4>';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const options = {
+                        method: endpoint.method,
+                        headers: { 'Content-Type': 'application/json' }
+                    };
+                    
+                    // Add test data for POST/PUT requests
+                    if (endpoint.method === 'POST' && endpoint.path === '/auth/login') {
+                        options.body = JSON.stringify({ employeeId: 'test', pin: 'test' });
+                    } else if (endpoint.method === 'PUT' && endpoint.path === '/config/system') {
+                        options.body = JSON.stringify({ test: true });
+                    } else if (endpoint.method === 'POST' && endpoint.path === '/reconciliations') {
+                        options.body = JSON.stringify({ test: true });
+                    }
+                    
+                    const response = await fetch(`${API_BASE_URL}${endpoint.path}`, options);
+                    
+                    if (response.status === 404) {
+                        results += `<p><span class="error">❌ ${endpoint.method} ${endpoint.path}</span> - ${endpoint.desc} (Not Found)</p>`;
+                    } else if (response.status >= 200 && response.status < 300) {
+                        results += `<p><span class="success">✅ ${endpoint.method} ${endpoint.path}</span> - ${endpoint.desc} (Status: ${response.status})</p>`;
+                    } else {
+                        results += `<p><span class="error">⚠️ ${endpoint.method} ${endpoint.path}</span> - ${endpoint.desc} (Status: ${response.status})</p>`;
+                    }
+                } catch (error) {
+                    results += `<p><span class="error">❌ ${endpoint.method} ${endpoint.path}</span> - ${endpoint.desc} (Error: ${error.message})</p>`;
+                }
+            }
+            
+            result.innerHTML = results;
+        }
+
+        async function testAPI() {
+            const result = document.getElementById('api-result');
+            result.innerHTML = 'Testing API connection...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/config/system`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    result.innerHTML = `<span class="success">✅ API is reachable (Status: ${response.status})</span>`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ API error (Status: ${response.status})</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Connection failed: ${error.message}</span>`;
+            }
+        }
+
+        function showLocalStorage() {
+            const result = document.getElementById('storage-result');
+            
+            const config = localStorage.getItem('smartbite-config');
+            const session = localStorage.getItem('smartbite-session');
+            const reconciliation = localStorage.getItem('smartbite-reconciliation');
+            
+            let output = '<h4>LocalStorage Contents:</h4>';
+            
+            if (config) {
+                try {
+                    const parsedConfig = JSON.parse(config);
+                    output += '<h5>Config:</h5><pre>' + JSON.stringify(parsedConfig, null, 2) + '</pre>';
+                } catch (e) {
+                    output += '<h5>Config (invalid JSON):</h5><pre>' + config + '</pre>';
+                }
+            } else {
+                output += '<p>No cached config found</p>';
+            }
+            
+            if (session) {
+                output += '<h5>Session exists:</h5><p>User session is cached</p>';
+            }
+            
+            if (reconciliation) {
+                output += '<h5>Reconciliation data exists:</h5><p>Form data is cached</p>';
+            }
+            
+            result.innerHTML = output;
+        }
+
+        function clearConfig() {
+            localStorage.removeItem('smartbite-config');
+            document.getElementById('storage-result').innerHTML = '<span class="success">✅ Configuration cache cleared</span>';
+        }
+
+        function clearAllStorage() {
+            localStorage.clear();
+            document.getElementById('storage-result').innerHTML = '<span class="success">✅ All localStorage cleared</span>';
+        }
+
+        async function fetchConfig() {
+            const result = document.getElementById('config-result');
+            result.innerHTML = 'Fetching configuration...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/config/system`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML = '<h4>Fresh Configuration from API:</h4><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    result.innerHTML = `<span class="error">❌ Failed to fetch config (Status: ${response.status})</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

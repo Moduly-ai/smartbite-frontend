@@ -61,7 +61,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('employee');
-                setFormData({ employeeId: '', pin: '' });
+                setFormData({ employeeId: 'employee-001', pin: 'employee789' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -76,7 +76,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('owner');
-                setFormData({ employeeId: '', pin: '' });
+                setFormData({ employeeId: 'owner-001', pin: 'owner123' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${

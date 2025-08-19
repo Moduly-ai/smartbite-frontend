@@ -10,7 +10,9 @@
       "Bash(./deploy-azure.sh)",
       "Bash(az account:*)",
       "Bash(./deploy-azure-simple.sh:*)",
-      "Bash(swa deploy:*)"
+      "Bash(swa deploy:*)",
+      "Bash(az staticwebapp secrets list:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

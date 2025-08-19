@@ -11,20 +11,39 @@ export const configService = {
    * @returns {Promise<Object>} Configuration data
    */
   async getSystemConfig() {
+    console.log('ConfigService: getSystemConfig called');
+    
     try {
+      console.log('ConfigService: Making GET request to /config/system');
       const response = await apiClient.get('/config/system');
+      console.log('ConfigService: GET response received:', response);
       
       if (response.success) {
+        console.log('ConfigService: API get successful');
+        
+        // Check if the response contains actual config data
+        if (response.config) {
+          console.log('ConfigService: API returned config data:', response.config);
+        } else {
+          console.warn('ConfigService: API response missing config data:', response);
+        }
+        
         return {
           success: true,
           config: response.config,
           message: 'Configuration retrieved successfully'
         };
       } else {
+        console.warn('ConfigService: API returned success=false:', response);
         throw new Error(response.message || 'Failed to get configuration');
       }
     } catch (error) {
-      console.warn('Configuration API not available, using default config:', error);
+      console.error('ConfigService: API get error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      console.warn('ConfigService: API error, using default config:', error);
       
       // Return default configuration if API is not available
       return {
@@ -41,28 +60,67 @@ export const configService = {
    * @returns {Promise<Object>} Update result
    */
   async updateSystemConfig(config) {
+    console.log('ConfigService: updateSystemConfig called with config:');
+    console.log('=== CONFIG OBJECT START ===');
+    console.log(JSON.stringify(config, null, 2));
+    console.log('=== CONFIG OBJECT END ===');
+    
     try {
+      console.log('ConfigService: Making PUT request to /config/system');
+      console.log('ConfigService: Request URL:', `${apiClient.baseURL}/config/system`);
+      console.log('ConfigService: Request body (stringified):', JSON.stringify(config));
+      
       const response = await apiClient.put('/config/system', config);
+      console.log('ConfigService: PUT response received:', response);
       
       if (response.success) {
-        // Update cached config
-        localStorage.setItem('smartbite-config', JSON.stringify(config));
+        console.log('ConfigService: API update successful');
+        
+        // Check if the response contains the updated config
+        if (response.config) {
+          console.log('ConfigService: API returned updated config:', response.config);
+        } else {
+          console.warn('ConfigService: API did not return updated config, using sent config');
+        }
+        
+        // Clear any existing cache to ensure fresh data is fetched next time
+        this.clearCachedConfig();
+        
+        // Store the updated config with a timestamp
+        const configWithTimestamp = {
+          ...config,
+          _lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('smartbite-config', JSON.stringify(configWithTimestamp));
+        console.log('ConfigService: Config cached locally');
         
         return {
           success: true,
-          config: response.config,
-          message: 'Configuration updated successfully'
+          config: response.config || config, // Use API config if available, otherwise use sent config
+          message: response.message || 'Configuration updated successfully'
         };
       } else {
+        console.warn('ConfigService: API returned success=false:', response);
         throw new Error(response.message || 'Failed to update configuration');
       }
     } catch (error) {
-      console.error('Failed to update configuration:', error);
+      console.error('ConfigService: API error details:', {
+        message: error.message,
+        stack: error.stack,
+        isNetworkError: error.message.includes('fetch') || error.message.includes('NetworkError')
+      });
       
       // For development, save to localStorage as fallback
-      if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
-        localStorage.setItem('smartbite-config', JSON.stringify(config));
-        console.warn('API not available, saved config locally');
+      if (error.message.includes('fetch') || error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+        console.warn('ConfigService: API not available, falling back to localStorage');
+        // Clear cache first, then set new config
+        this.clearCachedConfig();
+        const configWithTimestamp = {
+          ...config,
+          _lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('smartbite-config', JSON.stringify(configWithTimestamp));
+        console.warn('ConfigService: Config saved locally only');
         
         return {
           success: true,
@@ -90,6 +148,41 @@ export const configService = {
     } catch (error) {
       console.error('Failed to parse cached config:', error);
       return null;
+    }
+  },
+
+  /**
+   * Clear cached configuration from localStorage
+   */
+  clearCachedConfig() {
+    try {
+      localStorage.removeItem('smartbite-config');
+    } catch (error) {
+      console.error('Failed to clear cached config:', error);
+    }
+  },
+
+  /**
+   * Get fresh configuration directly from API (bypass cache)
+   * @returns {Promise<Object>} Configuration data
+   */
+  async getFreshConfig() {
+    try {
+      // Always try to get from API first, don't use cache
+      const result = await this.getSystemConfig();
+      if (result.success) {
+        // Update cache with fresh data
+        localStorage.setItem('smartbite-config', JSON.stringify(result.config));
+      }
+      return result;
+    } catch (error) {
+      console.error('ConfigService: Failed to get fresh config:', error);
+      // Only fall back to default config if API fails completely
+      return {
+        success: true,
+        config: this.getDefaultConfig(),
+        message: 'Using default configuration (API unavailable)'
+      };
     }
   },
 
@@ -132,17 +225,8 @@ export const configService = {
       const result = await this.getSystemConfig();
       return result;
     } catch (error) {
-      // Fall back to cached config
-      const cached = this.getCachedConfig();
-      if (cached) {
-        return {
-          success: true,
-          config: cached,
-          message: 'Using cached configuration'
-        };
-      }
-      
-      // Fall back to default config
+      console.error('ConfigService: API error, using default config:', error);
+      // Fall back to default config if API fails
       return {
         success: true,
         config: this.getDefaultConfig(),

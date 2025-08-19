@@ -31,13 +31,6 @@ class ApiClient {
       },
     };
 
-    console.log('API Request:', {
-      method: config.method || 'GET',
-      url,
-      headers: config.headers,
-      body: config.body
-    });
-
     // Add timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -46,12 +39,6 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
-
-      console.log('API Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -62,11 +49,11 @@ class ApiClient {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const jsonResponse = await response.json();
-        console.log('API JSON Response:', jsonResponse);
         return jsonResponse;
       }
       
-      return await response.text();
+      const textResponse = await response.text();
+      return textResponse;
     } catch (error) {
       clearTimeout(timeoutId);
       

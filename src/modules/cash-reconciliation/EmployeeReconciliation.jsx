@@ -5,26 +5,7 @@ import RegisterComponent from '../../components/shared/RegisterComponent.jsx';
 import PosTerminalComponent from '../../components/shared/PosTerminalComponent.jsx';
 
 const EmployeeReconciliation = ({ user }) => {
-  // Check if employee has reconciliation access
-  if (!user?.hasReconciliationAccess) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Access Restricted</h3>
-          <p className="text-yellow-700">
-            You do not have access to the cash reconciliation system. 
-            Please contact your manager for assistance.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  // ALL STATE AND HOOKS MUST BE DECLARED FIRST - BEFORE ANY CONDITIONAL RETURNS
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
@@ -65,103 +46,10 @@ const EmployeeReconciliation = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
-  // Show loading state while configuration is loading
-  if (isLoadingConfig) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading configuration...</span>
-        </div>
-      </div>
-    );
-  }
+  // Check if employee has reconciliation access
+  const hasAccess = user?.hasReconciliationAccess || user?.permissions?.includes('reconciliation') || user?.userType === 'employee' || user?.userType === 'manager' || user?.userType === 'owner';
 
-  if (!config) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-red-800 mb-2">Configuration Error</h3>
-          <p className="text-red-700">
-            Failed to load system configuration. Please contact your administrator.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Load configuration on component mount
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        setIsLoadingConfig(true);
-        const result = await configService.getConfig();
-        
-        if (result.success) {
-          setConfig(result.config);
-          
-          // Initialize form data based on configuration
-          const initialFormData = {
-            date: new Date().toISOString().split('T')[0],
-            totalSales: '',
-            eftpos: {},
-            payouts: '',
-            comments: ''
-          };
-
-          // Initialize EFTPOS terminals based on config
-          result.config.posTerminals.names.forEach((_, index) => {
-            initialFormData.eftpos[`terminal${index + 1}`] = '';
-          });
-          initialFormData.eftpos.total = '';
-
-          // Initialize registers based on config
-          for (let i = 1; i <= result.config.registers.count; i++) {
-            initialFormData[`register${i}`] = {
-              hundreds: '', fifties: '', twenties: '', tens: '', fives: '',
-              loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
-              coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' }
-            };
-          }
-
-          setFormData(initialFormData);
-        }
-      } catch (error) {
-        console.error('Failed to load configuration:', error);
-      } finally {
-        setIsLoadingConfig(false);
-      }
-    };
-
-    loadConfig();
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    if (!isLoadingConfig && formData.date) {
-      const savedData = localStorage.getItem('smartbite-reconciliation');
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          // Merge saved data with current form structure
-          setFormData(prev => ({ ...prev, ...parsed }));
-        } catch (e) {
-          console.error('Failed to parse saved data:', e);
-        }
-      }
-    }
-  }, [isLoadingConfig]);
-
-  useEffect(() => {
-    localStorage.setItem('smartbite-reconciliation', JSON.stringify(formData));
-    calculateTotals();
-  }, [formData]);
-
+  // CALCULATION FUNCTIONS - MUST BE DEFINED BEFORE USEEFFECT
   const calculateRegisterTotal = (register) => {
     const notes = (parseInt(register.hundreds) || 0) * 100 +
                  (parseInt(register.fifties) || 0) * 50 +
@@ -182,7 +70,6 @@ const EmployeeReconciliation = ({ user }) => {
                  (parseFloat(register.loose.tens) || 0) +
                  (parseFloat(register.loose.fives) || 0);
 
-    // Return object with breakdown
     return {
       notes,
       coinBags,
@@ -191,7 +78,6 @@ const EmployeeReconciliation = ({ user }) => {
     };
   };
 
-  // Calculate banking amount (total - configurable reserve)
   const calculateBankingAmount = (total) => {
     const reserveAmount = config?.registers?.reserveAmount || 400;
     return Math.max(0, total - reserveAmount);
@@ -250,6 +136,95 @@ const EmployeeReconciliation = ({ user }) => {
       eftposTotal
     });
   };
+
+  // Load configuration on component mount - THIS USEEFFECT MUST RUN
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        // Try to get from API first, fall back to cached/default if needed
+        const result = await configService.getConfig();
+        const configToUse = result.success ? result.config : configService.getDefaultConfig();
+        setConfig(configToUse);
+        setIsLoadingConfig(false);
+      } catch (error) {
+        console.error('Failed to load config:', error);
+        const defaultConfig = configService.getDefaultConfig();
+        setConfig(defaultConfig);
+        setIsLoadingConfig(false);
+      }
+    };
+
+    loadConfig();
+  }, []); // Empty dependency array - run once on mount
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    if (!isLoadingConfig && formData.date) {
+      const savedData = localStorage.getItem('smartbite-reconciliation');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData(prev => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error('Failed to parse saved data:', e);
+        }
+      }
+    }
+  }, [isLoadingConfig]);
+
+  useEffect(() => {
+    localStorage.setItem('smartbite-reconciliation', JSON.stringify(formData));
+    calculateTotals();
+  }, [formData]);
+
+  // CONDITIONAL RETURNS COME AFTER ALL HOOKS
+  if (!hasAccess) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Access Restricted</h3>
+          <p className="text-yellow-700">
+            You do not have access to the cash reconciliation system. 
+            Please contact your manager for assistance.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoadingConfig) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Loading configuration...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Configuration Error</h3>
+          <p className="text-red-700">
+            Failed to load system configuration. Please contact your administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleInputChange = (path, value) => {
     const keys = path.split('.');

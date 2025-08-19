@@ -24,12 +24,13 @@ export const authService = {
         apiClient.setAuthToken(response.token);
         
         // Store user session in localStorage
-        localStorage.setItem('smartbite-session', JSON.stringify({
+        const sessionData = {
           user: response.user,
           token: response.token,
           expiresAt: Date.now() + (response.expiresIn * 1000 || 8 * 60 * 60 * 1000),
           loginTime: new Date().toISOString()
-        }));
+        };
+        localStorage.setItem('smartbite-session', JSON.stringify(sessionData));
 
         return {
           success: true,

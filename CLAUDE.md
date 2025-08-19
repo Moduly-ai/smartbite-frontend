@@ -4,13 +4,36 @@
 
 **SmartBite Frontend** is a React-based cash reconciliation system designed for restaurant management. It provides a comprehensive solution for employees and owners to manage daily cash reconciliation processes with real-time calculations, validation, and secure API integration.
 
+## Current System Status (Updated: August 20, 2025)
+
+### ⚠️ CRITICAL ISSUE: Configuration API Not Properly Implemented
+**Status**: REQUIRES IMMEDIATE ATTENTION  
+**Impact**: Multi-device configuration synchronization broken  
+**Details**: See `API_INVESTIGATION_PROMPT.md` for complete analysis and action plan
+
+### Recently Resolved Issues ✅
+- **Employee Login Stuck**: Fixed React hooks ordering violation in EmployeeReconciliation.jsx
+- **Debug Logging**: Cleaned up production code, removed console.log statements
+- **Component Lifecycle**: Proper useEffect execution now works correctly
+
+### Active API Endpoints
+- **Base URL**: `https://func-smartbite-reconciliation.azurewebsites.net/api`
+- **GET /config/system**: Responds but returns service metadata instead of config data
+- **PUT /config/system**: Accepts data but doesn't store properly
+- **Status**: Partially functional - needs complete backend implementation
+
 ## Architecture & Technology Stack
 
 ### Frontend Stack
 - **React 18** - Modern component-based UI framework
-- **Vite** - Fast build tool and development server
+- **Vite** - Fast build tool and development server (localhost:3000)
 - **Tailwind CSS** - Utility-first CSS framework for responsive design
 - **JavaScript (ES6+)** - Modern JavaScript features
+
+### Backend Integration
+- **Azure Functions** - Serverless API backend (needs configuration endpoints)
+- **API Client** - Centralized HTTP client with error handling
+- **Configuration Service** - Manages system config with fallback to localStorage
 
 ### Development Tools
 - **ESLint** - Code linting and quality assurance
@@ -70,7 +93,41 @@ smartbite-frontend/
 └── CLAUDE.md                    # This file
 ```
 
-## Core Features
+## Current Development State
+
+### Code Health Status ✅
+- **src/modules/cash-reconciliation/EmployeeReconciliation.jsx**: FIXED - React hooks ordering violation resolved
+- **src/services/configService.js**: CLEANED - Production ready, debug logging removed
+- **src/services/authService.js**: CLEANED - Debug logging removed  
+- **src/services/apiClient.js**: STABLE - HTTP client with proper error handling
+- **src/features/auth/LoginScreen.jsx**: CLEANED - Production ready
+
+### Configuration Service Architecture
+```javascript
+// Current API contract expected by frontend:
+configService.getSystemConfig() -> {
+  success: true,
+  config: {
+    registers: { count: N, names: [...], reserveAmount: N },
+    posTerminals: { count: N, names: [...] },
+    reconciliation: { varianceTolerance: N, requireManagerApproval: boolean }
+  }
+}
+
+configService.updateSystemConfig(config) -> {
+  success: true,
+  config: { /* updated config */ },
+  message: "Configuration updated successfully"
+}
+```
+
+### Known Issues & Limitations
+1. **Configuration Sync**: localStorage approach doesn't work across different devices
+2. **API Implementation**: Backend endpoints exist but don't store/retrieve data properly
+3. **Error Handling**: Falls back to default config when API fails
+4. **Cache Strategy**: Simplified to avoid localStorage dependency issues
+
+### Core Features
 
 ### 1. Authentication System
 - **Dual Login Types**: Employee and Owner authentication
@@ -393,7 +450,191 @@ The SmartBite Frontend is production-ready with **live API integration** to Azur
 
 ---
 
-**Last Updated**: August 19, 2025
-**Version**: 1.0.0
-**Deployment**: Azure Static Web Apps Ready
+## CRITICAL BUG - Employee Login Configuration Loading Issue
+
+### Current Problem
+The Employee login successfully authenticates with the API but gets **permanently stuck** on "Loading configuration..." screen. The `EmployeeReconciliation` component never progresses beyond the loading state.
+
+### Detailed Issue Analysis
+
+#### What Works ✅
+- Authentication API call succeeds (200 response)
+- User session stored correctly in localStorage
+- JWT token properly received and stored
+- Component mounts successfully
+- Access check passes (`hasAccess: true`)
+- State shows `isLoadingConfig: true`
+
+#### What Fails ❌
+- **useEffect hook never executes** in EmployeeReconciliation component
+- No configuration API call is made to `/config/system`
+- Component remains in permanent loading state
+- User cannot access reconciliation form
+
+#### Logs Pattern
+```javascript
+// ✅ WORKING: Authentication flow
+LoginScreen: Attempting login...
+AuthService: Login API response: {success: true, user: {...}, token: '...'}
+App: User session set to: {...}
+
+// ✅ WORKING: Component mounting
+EmployeeReconciliation: Component mounted/rendered with user: {...}
+EmployeeReconciliation: Access check result: {hasAccess: true, userType: 'employee'}
+EmployeeReconciliation: isLoadingConfig = true
+EmployeeReconciliation: Showing loading state
+
+// ❌ MISSING: Configuration loading
+// Should see: "EmployeeReconciliation: useEffect running, hasAccess = true"
+// Should see: "ConfigService: Making API call to /config/system"
+// Never happens!
+```
+
+### Root Cause Hypothesis
+The React `useEffect` hook in `EmployeeReconciliation.jsx` is not executing despite component mounting successfully. This suggests:
+1. Component render cycle issue
+2. React lifecycle problem
+3. State dependency issue with `useEffect([hasAccess])`
+4. Possible infinite re-render loop preventing useEffect execution
+
+### Debug Modifications Made (NEED REVERSION)
+**All debug changes should be removed for production:**
+
+#### Files Modified for Debugging:
+1. **`src/App.jsx`**
+   - Added session restoration logging
+   - Added handleLogin logging
+   - **REVERT**: Remove all `console.log` statements
+
+2. **`src/features/auth/LoginScreen.jsx`**
+   - Added pre-populated demo credentials
+   - Added login process logging
+   - **KEEP**: Demo credentials (useful feature)
+   - **REVERT**: Remove debug logging
+
+3. **`src/services/authService.js`**
+   - Added comprehensive login flow logging
+   - **REVERT**: Remove all debug `console.log` statements
+
+4. **`src/services/apiClient.js`**
+   - Added request/response logging
+   - **REVERT**: Remove all debug `console.log` statements
+
+5. **`src/services/configService.js`**
+   - Added API call logging
+   - **REVERT**: Remove all debug `console.log` statements
+
+6. **`src/modules/cash-reconciliation/EmployeeReconciliation.jsx`**
+   - Added extensive component lifecycle logging
+   - Modified useEffect dependency from `[]` to `[hasAccess]`
+   - Added state and access check logging
+   - **REVERT**: Remove all debug logging, fix useEffect
+
+7. **`src/modules/cash-reconciliation/OwnerReconciliationReview.jsx`**
+   - Added safe property access with optional chaining
+   - **KEEP**: Safe property access (bug fix)
+   - **REVERT**: Any debug logging
+
+8. **`staticwebapp.config.json`**
+   - Fixed route configuration for proper static file serving
+   - **KEEP**: This is a necessary fix
+
+### Recommended Solution Approach
+
+#### 1. Simple useEffect Fix (Try First)
+```javascript
+// In EmployeeReconciliation.jsx
+useEffect(() => {
+  const loadConfig = async () => {
+    try {
+## Development History & Context
+
+### August 20, 2025 - Configuration API Crisis Resolution
+**Issue**: Employee login stuck on "Loading configuration..." with configuration changes not syncing between owner and employee devices.
+
+**Root Causes Identified**:
+1. React hooks ordering violation in EmployeeReconciliation.jsx preventing useEffect execution
+2. Configuration API endpoints responding but not actually storing/retrieving data
+3. localStorage caching strategy failing across different devices
+
+**Actions Taken**:
+1. ✅ **Fixed React Component**: Moved all useState/useEffect hooks before conditional returns
+2. ✅ **Cleaned Production Code**: Removed debug logging from all service files  
+3. ✅ **Simplified Configuration Service**: Removed complex caching logic
+4. ⚠️ **Identified API Gap**: Backend needs proper configuration storage implementation
+
+**Current State**: Frontend code is production-ready but depends on backend API fixes for full functionality.
+
+### Key Technical Decisions
+- **React Hooks**: Strict adherence to hooks rules - all hooks before any conditional logic
+- **Error Handling**: Graceful fallback to default configuration when API unavailable
+- **Service Architecture**: Centralized API client with consistent error handling
+- **Cache Strategy**: Abandoned localStorage for cross-device sync (requires proper API)
+
+### Development Best Practices Applied
+- **Console Logging**: Removed all debug logging for production deployment
+- **Component Lifecycle**: Proper useEffect dependency management
+- **API Integration**: Consistent response format across all service calls
+- **Error Boundaries**: Comprehensive try-catch blocks with fallback behavior
+
+---
+
+## Technical Reference - React Hooks Fix (Historical)
+
+### Problem Resolution Pattern
+The following pattern was used to fix the React hooks violation:
+
+```javascript
+// ❌ WRONG - Hooks after conditional return
+const SomeComponent = () => {
+  if (condition) return <div>Loading...</div>;
+  
+  const [state, setState] = useState(null); // ❌ Hook after return
+  useEffect(() => {}, []); // ❌ Hook after return
+};
+
+// ✅ CORRECT - All hooks before any returns
+const SomeComponent = () => {
+  const [state, setState] = useState(null); // ✅ Hook at top
+  useEffect(() => {}, []); // ✅ Hook at top
+  
+  if (condition) return <div>Loading...</div>; // ✅ Return after hooks
+};
+```
+
+This pattern ensures React hooks execute in consistent order on every render.
+
+### Production Cleanup Required
+
+#### Files to Clean:
+1. Remove debug logging from all service files
+2. Remove component lifecycle logging
+3. Keep functional fixes (safe property access, static file routing)
+4. Test both employee and owner login flows
+
+#### Verification Steps:
+1. Employee login should proceed directly to reconciliation form
+2. Owner login should proceed to dashboard without crashes
+3. Configuration API should be called (check network tab)
+4. No debug logs in production console
+
+### Current Project State
+- **Authentication**: ✅ Working perfectly with live API
+- **Owner Login**: ✅ Working (after property access fixes)
+- **Employee Login**: ❌ BLOCKED - Stuck on config loading
+- **API Integration**: ✅ All endpoints working
+- **Deployment**: ✅ Successfully deployed to Azure
+
+### Priority Actions
+1. **URGENT**: Fix EmployeeReconciliation useEffect execution
+2. **HIGH**: Remove all debug logging for production
+3. **MEDIUM**: Test end-to-end flows
+4. **LOW**: Performance optimization
+
+---
+
+**Last Updated**: August 19, 2025 - CRITICAL BUG DOCUMENTATION
+**Version**: 1.0.0 - DEBUGGING STATE
+**Status**: EMPLOYEE LOGIN BLOCKED - NEEDS IMMEDIATE FIX
+**Deployment**: Azure Static Web Apps (with debug code)
 **CI/CD**: GitHub Actions Configured

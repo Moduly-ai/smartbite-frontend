@@ -416,23 +416,23 @@ const OwnerReconciliationReview = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total Sales</span>
-                  <span className="font-medium">${reconciliation.formData.totalSales.toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.formData?.totalSales || reconciliation.totalSales || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Expected Banking</span>
-                  <span className="font-medium">${reconciliation.calculations.expectedBanking.toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.calculations?.expectedBanking || reconciliation.expectedBanking || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Actual Banking</span>
-                  <span className="font-medium">${reconciliation.formData.actualBanking.toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.formData?.actualBanking || reconciliation.actualBanking || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                   <span className="text-sm font-medium text-gray-700">Variance</span>
-                  <span className={`font-bold ${getVarianceColor(reconciliation.calculations.variance)}`}>
-                    ${reconciliation.calculations.variance.toFixed(2)}
+                  <span className={`font-bold ${getVarianceColor(reconciliation.calculations?.variance || reconciliation.variance || 0)}`}>
+                    ${(reconciliation.calculations?.variance || reconciliation.variance || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
