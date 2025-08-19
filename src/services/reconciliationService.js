@@ -14,14 +14,11 @@ export const reconciliationService = {
    */
   async submitReconciliation(reconciliationData, employeeName) {
     try {
-      // Set employee name header
-      apiClient.setHeader('x-employee-name', employeeName || 'Unknown Employee');
-      
       const response = await apiClient.post('/reconciliations', {
         ...reconciliationData,
         submittedAt: new Date().toISOString(),
         status: 'submitted',
-        employeeName
+        employeeName: employeeName || 'Unknown Employee'
       });
 
       if (response.success && response.reconciliation) {
