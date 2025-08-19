@@ -41,10 +41,28 @@ export const authService = {
         throw new Error(response.error || 'Login failed');
       }
     } catch (error) {
-      console.warn('API authentication failed, using fallback:', error);
+      console.error('API authentication failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
       
-      // Fallback to mock authentication if API is not available
-      return this.mockLogin(employeeId, pin);
+      // Only fallback to mock if it's a network error, not an authentication error
+      if (error.message.includes('fetch') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('timeout') ||
+          error.name === 'TypeError') {
+        console.warn('Network error detected, using mock fallback');
+        return this.mockLogin(employeeId, pin);
+      }
+      
+      // For authentication errors, return the actual error
+      return {
+        success: false,
+        error: error.message,
+        message: error.message.includes('Login failed') ? 'Invalid credentials' : 'Login failed. Please try again.'
+      };
     }
   },
 
