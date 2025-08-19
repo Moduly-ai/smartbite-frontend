@@ -10,7 +10,7 @@ echo "🚀 Starting Azure deployment for SmartBite Frontend..."
 # Configuration
 RESOURCE_GROUP="smartbite-rg"
 APP_NAME="smartbite-frontend"
-LOCATION="East US"
+LOCATION="East US 2"
 GITHUB_REPO_URL="https://github.com/YOUR_USERNAME/smartbite-frontend"
 BRANCH="main"
 

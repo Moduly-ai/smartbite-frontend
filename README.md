@@ -56,7 +56,7 @@ This project is configured for deployment to Azure Static Web Apps with automate
      --name smartbite-frontend \
      --resource-group smartbite-rg \
      --source https://github.com/YOUR_USERNAME/smartbite-frontend \
-     --location "West US 2" \
+     --location "East US 2" \
      --branch main \
      --app-location "/" \
      --output-location "dist"
