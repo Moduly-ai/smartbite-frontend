@@ -11,7 +11,7 @@ echo "🚀 Starting Azure deployment for SmartBite Frontend..."
 RESOURCE_GROUP="smartbite-rg"
 APP_NAME="smartbite-frontend"
 LOCATION="East US 2"
-GITHUB_REPO_URL="https://github.com/YOUR_USERNAME/smartbite-frontend"
+GITHUB_REPO_URL="https://github.com/ImranQasim/smartbite-frontend"
 BRANCH="main"
 
 # Colors for output
