@@ -8,6 +8,53 @@ const ConfigurationSettings = ({ user, onClose }) => {
   const [saveStatus, setSaveStatus] = useState(null);
   const [errors, setErrors] = useState({});
 
+  // Normalize configuration to ensure arrays match counts
+  const normalizeConfig = (config) => {
+    if (!config) return config;
+    
+    const normalized = { ...config };
+    
+    // Fix registers configuration
+    if (normalized.registers) {
+      const registerCount = normalized.registers.count || 0;
+      
+      // Ensure names array matches count
+      if (!normalized.registers.names || normalized.registers.names.length !== registerCount) {
+        normalized.registers.names = Array.from({ length: registerCount }, (_, i) => 
+          normalized.registers.names?.[i] || `Register ${i + 1}`
+        );
+      }
+      
+      // Ensure enabled array matches count
+      if (!normalized.registers.enabled || normalized.registers.enabled.length !== registerCount) {
+        normalized.registers.enabled = Array.from({ length: registerCount }, (_, i) => 
+          normalized.registers.enabled?.[i] !== undefined ? normalized.registers.enabled[i] : true
+        );
+      }
+    }
+    
+    // Fix POS terminals configuration
+    if (normalized.posTerminals) {
+      const terminalCount = normalized.posTerminals.count || 0;
+      
+      // Ensure names array matches count
+      if (!normalized.posTerminals.names || normalized.posTerminals.names.length !== terminalCount) {
+        normalized.posTerminals.names = Array.from({ length: terminalCount }, (_, i) => 
+          normalized.posTerminals.names?.[i] || `Terminal ${i + 1}`
+        );
+      }
+      
+      // Ensure enabled array matches count
+      if (!normalized.posTerminals.enabled || normalized.posTerminals.enabled.length !== terminalCount) {
+        normalized.posTerminals.enabled = Array.from({ length: terminalCount }, (_, i) => 
+          normalized.posTerminals.enabled?.[i] !== undefined ? normalized.posTerminals.enabled[i] : true
+        );
+      }
+    }
+    
+    return normalized;
+  };
+
   // Load current configuration
   useEffect(() => {
     const loadConfig = async () => {
@@ -16,7 +63,8 @@ const ConfigurationSettings = ({ user, onClose }) => {
         const result = await configService.getConfig();
         
         if (result.success) {
-          setConfig(result.config);
+          const normalizedConfig = normalizeConfig(result.config);
+          setConfig(normalizedConfig);
         } else {
           setErrors({ general: 'Failed to load configuration' });
         }
@@ -64,14 +112,25 @@ const ConfigurationSettings = ({ user, onClose }) => {
 
   const addRegister = () => {
     if (config.registers.count < 10) {
-      setConfig(prev => ({
-        ...prev,
-        registers: {
-          ...prev.registers,
-          count: prev.registers.count + 1,
-          names: [...prev.registers.names, `Register ${prev.registers.count + 1}`]
+      setConfig(prev => {
+        const newCount = prev.registers.count + 1;
+        const newNames = [...prev.registers.names];
+        
+        // Ensure names array matches the new count
+        while (newNames.length < newCount) {
+          newNames.push(`Register ${newNames.length + 1}`);
         }
-      }));
+        
+        return {
+          ...prev,
+          registers: {
+            ...prev.registers,
+            count: newCount,
+            names: newNames,
+            enabled: [...(prev.registers.enabled || []), true]
+          }
+        };
+      });
     }
   };
 
@@ -82,7 +141,8 @@ const ConfigurationSettings = ({ user, onClose }) => {
         registers: {
           ...prev.registers,
           count: prev.registers.count - 1,
-          names: prev.registers.names.slice(0, -1)
+          names: prev.registers.names.slice(0, prev.registers.count - 1),
+          enabled: (prev.registers.enabled || []).slice(0, prev.registers.count - 1)
         }
       }));
     }
@@ -90,15 +150,29 @@ const ConfigurationSettings = ({ user, onClose }) => {
 
   const addPosTerminal = () => {
     if (config.posTerminals.count < 20) {
-      setConfig(prev => ({
-        ...prev,
-        posTerminals: {
-          ...prev.posTerminals,
-          count: prev.posTerminals.count + 1,
-          names: [...prev.posTerminals.names, `Terminal ${prev.posTerminals.count + 1}`],
-          enabled: [...prev.posTerminals.enabled, true]
+      setConfig(prev => {
+        const newCount = prev.posTerminals.count + 1;
+        const newNames = [...prev.posTerminals.names];
+        const newEnabled = [...(prev.posTerminals.enabled || [])];
+        
+        // Ensure arrays match the new count
+        while (newNames.length < newCount) {
+          newNames.push(`Terminal ${newNames.length + 1}`);
         }
-      }));
+        while (newEnabled.length < newCount) {
+          newEnabled.push(true);
+        }
+        
+        return {
+          ...prev,
+          posTerminals: {
+            ...prev.posTerminals,
+            count: newCount,
+            names: newNames,
+            enabled: newEnabled
+          }
+        };
+      });
     }
   };
 
@@ -109,8 +183,8 @@ const ConfigurationSettings = ({ user, onClose }) => {
         posTerminals: {
           ...prev.posTerminals,
           count: prev.posTerminals.count - 1,
-          names: prev.posTerminals.names.slice(0, -1),
-          enabled: prev.posTerminals.enabled.slice(0, -1)
+          names: prev.posTerminals.names.slice(0, prev.posTerminals.count - 1),
+          enabled: (prev.posTerminals.enabled || []).slice(0, prev.posTerminals.count - 1)
         }
       }));
     }

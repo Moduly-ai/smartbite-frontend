@@ -95,6 +95,29 @@ export const configService = {
   },
 
   /**
+   * Clean configuration object for API submission
+   * Removes server-side fields that shouldn't be sent in PUT requests
+   * @param {Object} config - Configuration object to clean
+   * @returns {Object} Cleaned configuration object
+   */
+  cleanConfigForSubmission(config) {
+    const {
+      // Remove server-side fields
+      id,
+      tenantId,
+      lastUpdated,
+      version,
+      updatedBy,
+      timestamp,
+      _lastUpdated,
+      // Keep only the core configuration fields
+      ...cleanConfig
+    } = config;
+
+    return cleanConfig;
+  },
+
+  /**
    * Update system configuration (Owner only)
    * @param {Object} config - Updated configuration
    * @returns {Promise<Object>} Update result
@@ -120,12 +143,15 @@ export const configService = {
         message: 'Only owners can update system configuration'
       };
     }
+
+    // Clean the configuration object before sending
+    const cleanConfig = this.cleanConfigForSubmission(config);
     
     try {
       console.log('ConfigService: Making authenticated PUT request to /config/system');
-      console.log('ConfigService: Request body:', JSON.stringify(config, null, 2));
+      console.log('ConfigService: Request body:', JSON.stringify(cleanConfig, null, 2));
       
-      const response = await apiClient.put('/config/system', config);
+      const response = await apiClient.put('/config/system', cleanConfig);
       console.log('ConfigService: PUT response received:', response);
       
       if (response.success && response.config) {
@@ -167,6 +193,15 @@ export const configService = {
           success: false,
           error: 'Permission denied',
           message: 'Only owners can update system configuration'
+        };
+      }
+
+      // Handle validation errors
+      if (error.message.includes('Validation failed') || error.message.includes('400')) {
+        return {
+          success: false,
+          error: 'Validation failed',
+          message: 'Configuration data is invalid. Please check your inputs and try again.'
         };
       }
       

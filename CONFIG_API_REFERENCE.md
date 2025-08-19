@@ -62,6 +62,8 @@ curl -H "Authorization: Bearer YOUR_TOKEN_HERE" \
 
 **Endpoint:** `PUT /config/system`
 
+**Important**: Only send core configuration fields. Do NOT include server-side fields like `id`, `tenantId`, `lastUpdated`, `version`, `updatedBy`, `timestamp`.
+
 ```bash
 curl -X PUT \
      -H "Authorization: Bearer YOUR_TOKEN_HERE" \
@@ -69,10 +71,25 @@ curl -X PUT \
      -d '{
        "registers": {
          "count": 3,
-         "reserveAmount": 500.00
+         "names": ["Main Register", "Secondary Register", "Register 3"],
+         "reserveAmount": 500.00,
+         "enabled": [true, true, true]
        },
        "business": {
-         "name": "Updated Restaurant Name"
+         "name": "Updated Restaurant Name",
+         "timezone": "America/New_York",
+         "currency": "USD",
+         "taxRate": 8.5
+       },
+       "reconciliation": {
+         "dailyDeadline": "23:30",
+         "varianceTolerance": 10.00,
+         "requireManagerApproval": true
+       },
+       "posTerminals": {
+         "count": 2,
+         "names": ["POS 1", "POS 2"],
+         "enabled": [true, true]
        }
      }' \
      "https://func-smartbite-reconciliation.azurewebsites.net/api/config/system"
