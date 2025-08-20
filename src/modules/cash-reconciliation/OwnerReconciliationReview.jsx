@@ -442,23 +442,23 @@ const OwnerReconciliationReview = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total Sales</span>
-                  <span className="font-medium">${(reconciliation.summary?.totalSales || reconciliation.formData?.totalSales || reconciliation.totalSales || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(parseFloat(reconciliation.summary?.totalSales || reconciliation.formData?.totalSales || reconciliation.totalSales) || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Expected Banking</span>
-                  <span className="font-medium">${(reconciliation.summary?.expectedBanking || reconciliation.calculations?.expectedBanking || reconciliation.expectedBanking || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(parseFloat(reconciliation.summary?.expectedBanking || reconciliation.calculations?.expectedBanking || reconciliation.expectedBanking) || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Actual Banking</span>
-                  <span className="font-medium">${(reconciliation.summary?.actualBanking || reconciliation.formData?.actualBanking || reconciliation.actualBanking || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(parseFloat(reconciliation.summary?.actualBanking || reconciliation.formData?.actualBanking || reconciliation.actualBanking) || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                   <span className="text-sm font-medium text-gray-700">Variance</span>
                   <span className={`font-bold ${getVarianceColor(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance || 0)}`}>
-                    ${(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance || 0).toFixed(2)}
+                    ${(parseFloat(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance) || 0).toFixed(2)}
                   </span>
                 </div>
                 
@@ -558,30 +558,30 @@ const OwnerReconciliationReview = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Sales:</span>
-                        <span className="font-medium">${(selectedReconciliation?.summary?.totalSales || selectedReconciliation?.formData?.totalSales || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(parseFloat(selectedReconciliation?.summary?.totalSales || selectedReconciliation?.formData?.totalSales) || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">EFTPOS:</span>
-                        <span className="font-medium">${(selectedReconciliation?.summary?.totalEftpos || selectedReconciliation?.formData?.eftpos?.total || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(parseFloat(selectedReconciliation?.summary?.totalEftpos || selectedReconciliation?.formData?.eftpos?.total) || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Payouts:</span>
-                        <span className="font-medium">${(selectedReconciliation?.summary?.payouts || selectedReconciliation?.formData?.payouts || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(parseFloat(selectedReconciliation?.summary?.payouts || selectedReconciliation?.formData?.payouts) || 0).toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expected Banking:</span>
-                        <span className="font-medium">${(selectedReconciliation?.summary?.expectedBanking || selectedReconciliation?.calculations?.expectedBanking || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(parseFloat(selectedReconciliation?.summary?.expectedBanking || selectedReconciliation?.calculations?.expectedBanking) || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Actual Banking:</span>
-                        <span className="font-medium">${(selectedReconciliation?.summary?.actualBanking || selectedReconciliation?.formData?.actualBanking || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(parseFloat(selectedReconciliation?.summary?.actualBanking || selectedReconciliation?.formData?.actualBanking) || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="font-semibold text-gray-700">Variance:</span>
                         <span className={`font-bold ${getVarianceColor(selectedReconciliation?.summary?.variance || selectedReconciliation?.calculations?.variance || 0)}`}>
-                          ${(selectedReconciliation?.summary?.variance || selectedReconciliation?.calculations?.variance || 0).toFixed(2)}
+                          ${(parseFloat(selectedReconciliation?.summary?.variance || selectedReconciliation?.calculations?.variance) || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
