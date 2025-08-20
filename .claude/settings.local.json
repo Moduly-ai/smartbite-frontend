@@ -14,7 +14,8 @@
       "Bash(az staticwebapp secrets list:*)",
       "Bash(curl:*)",
       "Bash(rm:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

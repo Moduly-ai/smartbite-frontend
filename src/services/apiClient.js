@@ -31,6 +31,7 @@ class ApiClient {
       },
     };
 
+
     // Add timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
