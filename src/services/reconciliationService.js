@@ -17,7 +17,7 @@ export const reconciliationService = {
       const response = await apiClient.post('/reconciliations', {
         ...reconciliationData,
         submittedAt: new Date().toISOString(),
-        status: 'submitted',
+        status: 'pending_review',
         employeeName: employeeName || 'Unknown Employee'
       });
 

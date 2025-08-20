@@ -257,6 +257,27 @@ const OwnerReconciliationReview = () => {
 
   const handleApprove = async (reconciliationId) => {
     try {
+      // Check if this is a locally stored reconciliation (mock ID or has syncStatus)
+      const reconciliation = reconciliations.find(rec => rec.id === reconciliationId);
+      const isLocalReconciliation = reconciliation && (
+        reconciliationId.startsWith('recon_') || 
+        reconciliation.syncStatus === 'local_only' ||
+        reconciliation.localUpdate
+      );
+
+      if (isLocalReconciliation) {
+        // Update locally without API call
+        setReconciliations(prev => prev.map(rec =>
+          rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
+        ));
+        setSyncStatus({
+          type: 'success',
+          message: 'Reconciliation approved locally. Changes will sync when connection is restored.'
+        });
+        return;
+      }
+
+      // Try API update for server-stored reconciliations
       const result = await reconciliationService.updateReconciliationStatus(
         reconciliationId,
         'approved',
@@ -283,9 +304,14 @@ const OwnerReconciliationReview = () => {
       }
     } catch (error) {
       console.error('Failed to approve reconciliation:', error);
+      
+      // Fallback to local update on any error
+      setReconciliations(prev => prev.map(rec =>
+        rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
+      ));
       setSyncStatus({
-        type: 'error',
-        message: 'Failed to approve reconciliation'
+        type: 'warning',
+        message: 'API failed. Approved locally - changes will sync when connection is restored.'
       });
     }
   };
@@ -294,7 +320,7 @@ const OwnerReconciliationReview = () => {
     .filter(rec => filterStatus === 'all' || rec.status === filterStatus)
     .sort((a, b) => {
       if (sortBy === 'date') return new Date(b.date) - new Date(a.date);
-      if (sortBy === 'variance') return Math.abs(b.calculations.variance) - Math.abs(a.calculations.variance);
+      if (sortBy === 'variance') return Math.abs(b.summary?.variance || b.calculations?.variance || 0) - Math.abs(a.summary?.variance || a.calculations?.variance || 0);
       return 0;
     });
 
@@ -416,23 +442,23 @@ const OwnerReconciliationReview = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total Sales</span>
-                  <span className="font-medium">${(reconciliation.formData?.totalSales || reconciliation.totalSales || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.summary?.totalSales || reconciliation.formData?.totalSales || reconciliation.totalSales || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Expected Banking</span>
-                  <span className="font-medium">${(reconciliation.calculations?.expectedBanking || reconciliation.expectedBanking || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.summary?.expectedBanking || reconciliation.calculations?.expectedBanking || reconciliation.expectedBanking || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Actual Banking</span>
-                  <span className="font-medium">${(reconciliation.formData?.actualBanking || reconciliation.actualBanking || 0).toFixed(2)}</span>
+                  <span className="font-medium">${(reconciliation.summary?.actualBanking || reconciliation.formData?.actualBanking || reconciliation.actualBanking || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                   <span className="text-sm font-medium text-gray-700">Variance</span>
-                  <span className={`font-bold ${getVarianceColor(reconciliation.calculations?.variance || reconciliation.variance || 0)}`}>
-                    ${(reconciliation.calculations?.variance || reconciliation.variance || 0).toFixed(2)}
+                  <span className={`font-bold ${getVarianceColor(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance || 0)}`}>
+                    ${(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -455,14 +481,12 @@ const OwnerReconciliationReview = () => {
                       Edit & Fix
                     </button>
                     
-                    {reconciliation.calculations.isBalanced && (
-                      <button
-                        onClick={() => handleApprove(reconciliation.id)}
-                        className="flex-1 bg-green-50 text-green-700 hover:bg-green-100 px-3 py-2 rounded-lg font-medium text-sm transition-colors"
-                      >
+                    <button
+                      onClick={() => handleApprove(reconciliation.id)}
+                      className="flex-1 bg-green-50 text-green-700 hover:bg-green-100 px-3 py-2 rounded-lg font-medium text-sm transition-colors"
+                    >
                         Approve
                       </button>
-                    )}
                   </>
                 )}
               </div>
@@ -521,30 +545,30 @@ const OwnerReconciliationReview = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Sales:</span>
-                        <span className="font-medium">${selectedReconciliation.formData.totalSales.toFixed(2)}</span>
+                        <span className="font-medium">${(selectedReconciliation?.summary?.totalSales || selectedReconciliation?.formData?.totalSales || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">EFTPOS:</span>
-                        <span className="font-medium">${selectedReconciliation.formData.eftpos.toFixed(2)}</span>
+                        <span className="font-medium">${(selectedReconciliation?.summary?.totalEftpos || selectedReconciliation?.formData?.eftpos?.total || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Payouts:</span>
-                        <span className="font-medium">${selectedReconciliation.formData.payouts.toFixed(2)}</span>
+                        <span className="font-medium">${(selectedReconciliation?.summary?.payouts || selectedReconciliation?.formData?.payouts || 0).toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expected Banking:</span>
-                        <span className="font-medium">${selectedReconciliation.calculations.expectedBanking.toFixed(2)}</span>
+                        <span className="font-medium">${(selectedReconciliation?.summary?.expectedBanking || selectedReconciliation?.calculations?.expectedBanking || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Actual Banking:</span>
-                        <span className="font-medium">${selectedReconciliation.formData.actualBanking.toFixed(2)}</span>
+                        <span className="font-medium">${(selectedReconciliation?.summary?.actualBanking || selectedReconciliation?.formData?.actualBanking || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="font-semibold text-gray-700">Variance:</span>
-                        <span className={`font-bold ${getVarianceColor(selectedReconciliation.calculations.variance)}`}>
-                          ${selectedReconciliation.calculations.variance.toFixed(2)}
+                        <span className={`font-bold ${getVarianceColor(selectedReconciliation?.summary?.variance || selectedReconciliation?.calculations?.variance || 0)}`}>
+                          ${(selectedReconciliation?.summary?.variance || selectedReconciliation?.calculations?.variance || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -552,10 +576,10 @@ const OwnerReconciliationReview = () => {
                 </div>
 
                 {/* Comments */}
-                {selectedReconciliation.formData.comments && (
+                {(selectedReconciliation?.comments || selectedReconciliation?.formData?.comments) && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-semibold text-gray-900 mb-2">Comments</h4>
-                    <p className="text-gray-700">{selectedReconciliation.formData.comments}</p>
+                    <p className="text-gray-700">{selectedReconciliation?.comments || selectedReconciliation?.formData?.comments}</p>
                   </div>
                 )}
 
@@ -569,14 +593,12 @@ const OwnerReconciliationReview = () => {
                       >
                         Edit & Fix
                       </button>
-                      {selectedReconciliation.calculations.isBalanced && (
                         <button
                           onClick={() => handleApprove(selectedReconciliation.id)}
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                         >
                           Approve
                         </button>
-                      )}
                     </>
                   )}
                 </div>

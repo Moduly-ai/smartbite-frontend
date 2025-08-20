@@ -96,12 +96,6 @@ const EmployeeReconciliation = ({ user }) => {
       }
     });
     
-    // Update EFTPOS total in form data
-    setFormData(prev => ({
-      ...prev,
-      eftpos: { ...prev.eftpos, total: eftposTotal.toFixed(2) }
-    }));
-    
     const payouts = parseFloat(formData.payouts) || 0;
     
     // Calculate totals for all configured registers
@@ -285,10 +279,54 @@ const EmployeeReconciliation = ({ user }) => {
     setSubmitStatus(null);
 
     try {
+      // Format data to match API schema
       const submitData = {
-        ...formData,
-        calculations
+        date: formData.date,
+        registers: [],
+        posTerminals: [],
+        summary: {
+          totalSales: parseFloat(formData.totalSales) || 0,
+          totalEftpos: calculations.eftposTotal || 0,
+          payouts: parseFloat(formData.payouts) || 0,
+          expectedBanking: calculations.expectedBanking || 0,
+          actualBanking: calculations.actualBanking || 0,
+          variance: calculations.variance || 0
+        },
+        calculations: {
+          expectedBanking: calculations.expectedBanking || 0,
+          actualBanking: calculations.actualBanking || 0,
+          variance: calculations.variance || 0,
+          isBalanced: Math.abs(calculations.variance || 0) < 0.01,
+          ...calculations
+        },
+        comments: formData.comments || ''
       };
+
+      // Add register data
+      for (let i = 1; i <= config.registers.count; i++) {
+        const registerData = formData[`register${i}`];
+        if (registerData) {
+          submitData.registers.push({
+            id: i,
+            name: config.registers.names[i - 1] || `Register ${i}`,
+            cash: registerData,
+            total: calculations.registerTotals[i] || 0,
+            reserve: config.registers.reserveAmount || 400,
+            banking: calculations.registerBanking[i] || 0
+          });
+        }
+      }
+
+      // Add POS terminal data
+      config.posTerminals.names.forEach((name, index) => {
+        if (config.posTerminals.enabled[index]) {
+          submitData.posTerminals.push({
+            id: index + 1,
+            name: name || `Terminal ${index + 1}`,
+            total: parseFloat(formData.eftpos[`terminal${index + 1}`]) || 0
+          });
+        }
+      });
 
       const result = await reconciliationService.submitReconciliation(
         submitData, 
