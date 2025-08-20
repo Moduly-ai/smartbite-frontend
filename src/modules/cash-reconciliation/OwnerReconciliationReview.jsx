@@ -10,7 +10,6 @@ const OwnerReconciliationReview = () => {
   const [sortBy, setSortBy] = useState('date');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
 
   // Load reconciliations from API
@@ -27,131 +26,18 @@ const OwnerReconciliationReview = () => {
       
       if (result.success) {
         setReconciliations(result.data);
-        
-        // Show sync status if using local fallback
-        if (result.isLocalFallback) {
-          setSyncStatus({
-            type: 'warning',
-            message: 'Showing locally stored data. Server connection unavailable.'
-          });
-        }
       } else {
         setError(result.message);
-        // Fallback to mock data if API completely fails
-        loadMockData();
       }
     } catch (error) {
       console.error('Failed to load reconciliations:', error);
       setError('Failed to load reconciliation data');
-      loadMockData();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadMockData = () => {
-    const mockReconciliations = [
-      {
-        id: '2025-08-18-john-001',
-        date: '2025-08-18',
-        employeeName: 'John Smith',
-        submittedAt: '2025-08-18T09:30:00Z',
-        status: 'pending_review',
-        formData: {
-          totalSales: 2500.75,
-          eftpos: 900.50,
-          payouts: 125.00,
-          actualBanking: 1475.25,
-          comments: 'Busy Saturday, all registers balanced'
-        },
-        calculations: {
-          expectedBanking: 1475.25,
-          variance: 0,
-          isBalanced: true,
-          register1Total: 850.50,
-          register2Total: 624.75,
-          totalCash: 1475.25
-        }
-      },
-      {
-        id: '2025-08-17-jane-001',
-        date: '2025-08-17',
-        employeeName: 'Jane Doe',
-        submittedAt: '2025-08-17T18:45:00Z',
-        status: 'variance_found',
-        formData: {
-          totalSales: 1850.00,
-          eftpos: 650.00,
-          payouts: 80.00,
-          actualBanking: 1110.00,
-          comments: 'Short $10 in register 2, could not locate'
-        },
-        calculations: {
-          expectedBanking: 1120.00,
-          variance: -10.00,
-          isBalanced: false,
-          register1Total: 720.00,
-          register2Total: 390.00,
-          totalCash: 1110.00
-        }
-      },
-      {
-        id: '2025-08-16-mike-001',
-        date: '2025-08-16',
-        employeeName: 'Mike Johnson',
-        submittedAt: '2025-08-16T20:15:00Z',
-        status: 'approved',
-        formData: {
-          totalSales: 3200.25,
-          eftpos: 1200.75,
-          payouts: 200.00,
-          actualBanking: 1799.50,
-          comments: 'Perfect balance, all counts verified'
-        },
-        calculations: {
-          expectedBanking: 1799.50,
-          variance: 0,
-          isBalanced: true,
-          register1Total: 950.25,
-          register2Total: 849.25,
-          totalCash: 1799.50
-        }
-      }
-    ];
-    setReconciliations(mockReconciliations);
-  };
 
-  const syncPendingReconciliations = async () => {
-    try {
-      setIsSyncing(true);
-      setSyncStatus(null);
-      
-      const result = await reconciliationService.syncPendingReconciliations();
-      
-      if (result.success) {
-        setSyncStatus({
-          type: 'success',
-          message: result.message
-        });
-        
-        // Reload reconciliations after successful sync
-        await loadReconciliations();
-      } else {
-        setSyncStatus({
-          type: 'error',
-          message: result.message
-        });
-      }
-    } catch (error) {
-      console.error('Failed to sync reconciliations:', error);
-      setSyncStatus({
-        type: 'error',
-        message: 'Failed to sync pending reconciliations'
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -257,52 +143,14 @@ const OwnerReconciliationReview = () => {
 
   const handleApprove = async (reconciliationId) => {
     try {
-      // Check if this is a locally stored reconciliation (mock/local data)
-      const reconciliation = reconciliations.find(rec => rec.id === reconciliationId);
-      
-      // Server reconciliations have specific ID pattern and no local flags
-      const isServerReconciliation = reconciliation && 
-        !reconciliation.syncStatus && 
-        !reconciliation.localUpdate &&
-        reconciliationId.includes('-employee-') && // Server IDs contain employee info
-        reconciliationId.length > 30; // Server IDs are long
-        
-      const isLocalReconciliation = !isServerReconciliation;
-
-      console.log('Approval Debug:', {
-        reconciliationId,
-        isServerReconciliation,
-        isLocalReconciliation,
-        hasReconciliation: !!reconciliation,
-        reconciliationFlags: {
-          syncStatus: reconciliation?.syncStatus,
-          localUpdate: reconciliation?.localUpdate
-        }
-      });
-
-      if (isLocalReconciliation) {
-        // Update locally without API call
-        setReconciliations(prev => prev.map(rec =>
-          rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
-        ));
-        setSyncStatus({
-          type: 'success',
-          message: 'Reconciliation approved locally. Changes will sync when connection is restored.'
-        });
-        return;
-      }
-
-      // Try API update for server-stored reconciliations
-      console.log('Attempting API approval for:', reconciliationId);
       const result = await reconciliationService.updateReconciliationStatus(
         reconciliationId,
         'approved',
         'Approved by manager'
       );
       
-      console.log('API approval result:', result);
-      
       if (result.success) {
+        // Update local state to reflect approval
         setReconciliations(prev => prev.map(rec =>
           rec.id === reconciliationId ? { ...rec, status: 'approved' } : rec
         ));
@@ -311,25 +159,16 @@ const OwnerReconciliationReview = () => {
           message: 'Reconciliation approved successfully'
         });
       } else {
-        // Fallback to local update
-        setReconciliations(prev => prev.map(rec =>
-          rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
-        ));
         setSyncStatus({
-          type: 'warning',
-          message: 'Approved locally. Changes will sync when connection is restored.'
+          type: 'error',
+          message: result.message || 'Failed to approve reconciliation'
         });
       }
     } catch (error) {
       console.error('Failed to approve reconciliation:', error);
-      
-      // Fallback to local update on any error
-      setReconciliations(prev => prev.map(rec =>
-        rec.id === reconciliationId ? { ...rec, status: 'approved', localUpdate: true } : rec
-      ));
       setSyncStatus({
-        type: 'warning',
-        message: 'API failed. Approved locally - changes will sync when connection is restored.'
+        type: 'error',
+        message: 'Failed to approve reconciliation'
       });
     }
   };
@@ -403,13 +242,6 @@ const OwnerReconciliationReview = () => {
               {isLoading ? 'Loading...' : 'Refresh'}
             </button>
             
-            <button
-              onClick={syncPendingReconciliations}
-              disabled={isSyncing}
-              className="px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {isSyncing ? 'Syncing...' : 'Sync Pending'}
-            </button>
             
             <select
               value={filterStatus}

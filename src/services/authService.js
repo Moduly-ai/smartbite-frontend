@@ -49,20 +49,10 @@ export const authService = {
         stack: error.stack
       });
       
-      // Only fallback to mock if it's a network error, not an authentication error
-      if (error.message.includes('fetch') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('timeout') ||
-          error.name === 'TypeError') {
-        console.warn('Network error detected, using mock fallback');
-        return this.mockLogin(employeeId, pin);
-      }
-      
-      // For authentication errors, return the actual error
       return {
         success: false,
         error: error.message,
-        message: error.message.includes('Login failed') ? 'Invalid credentials' : 'Login failed. Please try again.'
+        message: error.message.includes('Login failed') ? 'Invalid credentials' : 'Authentication failed. Please try again.'
       };
     }
   },

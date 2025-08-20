@@ -58,12 +58,12 @@ const EmployeeReconciliation = ({ user }) => {
                  (parseInt(register.tens) || 0) * 10 +
                  (parseInt(register.fives) || 0) * 5;
 
-    const coinBags = (parseInt(register.coinBags.dollars) || 0) * 20 +
-                    (parseInt(register.coinBags.fifties) || 0) * 50 +
-                    (parseInt(register.coinBags.twenties) || 0) * 10 +
-                    (parseInt(register.coinBags.tens) || 0) * 4 +
-                    (parseInt(register.coinBags.fives) || 0) * 4 +
-                    (parseInt(register.coinBags.twos) || 0) * 2;
+    const coinBags = (parseInt(register.coinBags.dollars) || 0) * 20 +    // $1 Roll = $20 (20 x $1 coins)
+                    (parseInt(register.coinBags.twos) || 0) * 50 +      // $2 Roll = $50 (25 x $2 coins)
+                    (parseInt(register.coinBags.fifties) || 0) * 10 +   // 50¢ Roll = $10 (20 x 50¢ coins)
+                    (parseInt(register.coinBags.twenties) || 0) * 4 +   // 20¢ Roll = $4 (20 x 20¢ coins)
+                    (parseInt(register.coinBags.tens) || 0) * 4 +       // 10¢ Roll = $4 (40 x 10¢ coins)
+                    (parseInt(register.coinBags.fives) || 0) * 2;       // 5¢ Roll = $2 (40 x 5¢ coins)
 
     const loose = (parseFloat(register.loose.dollars) || 0) +
                  (parseFloat(register.loose.fifties) || 0) +
