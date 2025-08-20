@@ -1,34 +1,54 @@
 import React, { useState, useEffect } from 'react';
+import { employeeService } from '../../services/employeeService.js';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
+    employeeId: '',
     name: '',
     pin: '',
     mobile: '',
     hasReconciliationAccess: false
   });
 
-  // Initialize with mock data
+  // Load employees from API
   useEffect(() => {
-    const mockEmployees = [
-      { id: 1, name: 'John Smith', pin: '1234', mobile: '0412345678', hasReconciliationAccess: true, createdAt: '2025-01-15', status: 'active' },
-      { id: 2, name: 'Jane Doe', pin: '5678', mobile: '0423456789', hasReconciliationAccess: false, createdAt: '2025-01-20', status: 'active' },
-      { id: 3, name: 'Mike Johnson', pin: '9999', mobile: '0434567890', hasReconciliationAccess: true, createdAt: '2025-02-01', status: 'active' }
-    ];
-    setEmployees(mockEmployees);
+    loadEmployees();
   }, []);
 
+  const loadEmployees = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await employeeService.getEmployees();
+      
+      if (result.success) {
+        setEmployees(result.data);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to load employees:', error);
+      setError('Failed to load employees from server');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAddEmployee = () => {
-    setFormData({ name: '', pin: '', mobile: '', hasReconciliationAccess: false });
+    setFormData({ employeeId: '', name: '', pin: '', mobile: '', hasReconciliationAccess: false });
     setEditingEmployee(null);
     setShowAddModal(true);
   };
 
   const handleEditEmployee = (employee) => {
     setFormData({
+      employeeId: employee.employeeId || employee.id,
       name: employee.name,
       pin: employee.pin,
       mobile: employee.mobile,
@@ -38,43 +58,110 @@ const EmployeeManagement = () => {
     setShowAddModal(true);
   };
 
-  const handleSaveEmployee = () => {
-    if (editingEmployee) {
-      // Update existing employee
-      setEmployees(prev => prev.map(emp => 
-        emp.id === editingEmployee.id 
-          ? { ...emp, ...formData }
-          : emp
-      ));
-    } else {
-      // Add new employee
-      const newEmployee = {
-        id: Date.now(),
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0],
-        status: 'active'
-      };
-      setEmployees(prev => [...prev, newEmployee]);
+  const handleSaveEmployee = async () => {
+    try {
+      let result;
+      
+      if (editingEmployee) {
+        // Update existing employee
+        result = await employeeService.updateEmployee(editingEmployee.employeeId || editingEmployee.id, formData);
+      } else {
+        // Create new employee - generate employeeId if not provided
+        const employeeData = {
+          ...formData,
+          employeeId: formData.employeeId || employeeService.generateEmployeeId(formData.name)
+        };
+        result = await employeeService.createEmployee(employeeData);
+      }
+
+      if (result.success) {
+        // Reload employees from server
+        await loadEmployees();
+        setShowAddModal(false);
+        setError(null);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to save employee:', error);
+      setError('Failed to save employee');
     }
-    setShowAddModal(false);
   };
 
-  const handleDeleteEmployee = (employeeId) => {
+  const handleDeleteEmployee = async (employee) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
-      setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+      try {
+        const result = await employeeService.deleteEmployee(employee.employeeId || employee.id);
+        
+        if (result.success) {
+          // Reload employees from server
+          await loadEmployees();
+          setError(null);
+        } else {
+          setError(result.message);
+        }
+      } catch (error) {
+        console.error('Failed to delete employee:', error);
+        setError('Failed to delete employee');
+      }
     }
   };
 
-  const toggleReconciliationAccess = (employeeId) => {
-    setEmployees(prev => prev.map(emp =>
-      emp.id === employeeId
-        ? { ...emp, hasReconciliationAccess: !emp.hasReconciliationAccess }
-        : emp
-    ));
+  const toggleReconciliationAccess = async (employee) => {
+    try {
+      const updatedData = {
+        ...employee,
+        hasReconciliationAccess: !employee.hasReconciliationAccess
+      };
+      
+      const result = await employeeService.updateEmployee(employee.employeeId || employee.id, updatedData);
+      
+      if (result.success) {
+        // Reload employees from server
+        await loadEmployees();
+        setError(null);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to update employee access:', error);
+      setError('Failed to update employee access');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading employees...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-red-800">{error}</span>
+            <button 
+              onClick={() => setError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -105,7 +192,8 @@ const EmployeeManagement = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">{employee.name}</h4>
-                  <p className="text-sm text-gray-600">{employee.mobile}</p>
+                  <p className="text-sm text-gray-600">{employee.employeeId || employee.id}</p>
+                  <p className="text-xs text-gray-500">{employee.mobile}</p>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -118,7 +206,7 @@ const EmployeeManagement = () => {
                   </svg>
                 </button>
                 <button
-                  onClick={() => handleDeleteEmployee(employee.id)}
+                  onClick={() => handleDeleteEmployee(employee)}
                   className="text-red-600 hover:text-red-800 p-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +220,7 @@ const EmployeeManagement = () => {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">Reconciliation Access</span>
                 <button
-                  onClick={() => toggleReconciliationAccess(employee.id)}
+                  onClick={() => toggleReconciliationAccess(employee)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                     employee.hasReconciliationAccess ? 'bg-blue-600' : 'bg-gray-300'
                   }`}
@@ -180,6 +268,22 @@ const EmployeeManagement = () => {
             </h3>
             
             <form onSubmit={(e) => { e.preventDefault(); handleSaveEmployee(); }} className="space-y-4">
+              <div>
+                <label className="form-label">Employee ID</label>
+                <input
+                  type="text"
+                  required
+                  className="form-input"
+                  value={formData.employeeId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, employeeId: e.target.value }))}
+                  placeholder="e.g., employee-001 (auto-generated if empty)"
+                  disabled={editingEmployee}
+                />
+                {editingEmployee && (
+                  <p className="text-xs text-gray-500 mt-1">Employee ID cannot be changed</p>
+                )}
+              </div>
+
               <div>
                 <label className="form-label">Full Name</label>
                 <input

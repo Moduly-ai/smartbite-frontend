@@ -89,6 +89,7 @@ The application integrates with a live Azure Functions backend at:
 - **Authentication**: `POST /auth/login` - Employee/Owner login
 - **Configuration**: `GET|PUT /config/system` - System settings management
 - **Reconciliation**: `GET|POST /reconciliations` - Cash reconciliation data
+- **Employee Management**: `GET|POST|PUT|DELETE /employees` - Employee CRUD operations
 
 ### Response Examples
 
@@ -127,6 +128,57 @@ The application integrates with a live Azure Functions backend at:
       "requireManagerApproval": true
     }
   }
+}
+```
+
+#### Employee Management
+
+**Get All Employees**: `GET /employees`
+```json
+{
+  "success": true,
+  "employees": [
+    {
+      "employeeId": "employee-001",
+      "name": "John Smith",
+      "pin": "1234",
+      "mobile": "0412345678",
+      "hasReconciliationAccess": true,
+      "status": "active",
+      "createdAt": "2025-01-15T00:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Create Employee**: `POST /employees`
+```json
+{
+  "employeeId": "employee-002",
+  "name": "Jane Doe",
+  "pin": "5678",
+  "mobile": "0423456789",
+  "hasReconciliationAccess": false
+}
+```
+
+**Update Employee**: `PUT /employees/{employeeId}`
+```json
+{
+  "name": "Jane Smith",
+  "pin": "9999",
+  "mobile": "0423456789",
+  "hasReconciliationAccess": true,
+  "status": "active"
+}
+```
+
+**Delete Employee**: `DELETE /employees/{employeeId}`
+```json
+{
+  "success": true,
+  "message": "Employee deleted successfully"
 }
 ```
 

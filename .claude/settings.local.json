@@ -13,7 +13,8 @@
       "Bash(swa deploy:*)",
       "Bash(az staticwebapp secrets list:*)",
       "Bash(curl:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []
