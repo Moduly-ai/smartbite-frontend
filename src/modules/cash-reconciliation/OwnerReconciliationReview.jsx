@@ -257,13 +257,28 @@ const OwnerReconciliationReview = () => {
 
   const handleApprove = async (reconciliationId) => {
     try {
-      // Check if this is a locally stored reconciliation (mock ID or has syncStatus)
+      // Check if this is a locally stored reconciliation (mock/local data)
       const reconciliation = reconciliations.find(rec => rec.id === reconciliationId);
-      const isLocalReconciliation = reconciliation && (
-        reconciliationId.startsWith('recon_') || 
-        reconciliation.syncStatus === 'local_only' ||
-        reconciliation.localUpdate
-      );
+      
+      // Server reconciliations have specific ID pattern and no local flags
+      const isServerReconciliation = reconciliation && 
+        !reconciliation.syncStatus && 
+        !reconciliation.localUpdate &&
+        reconciliationId.includes('-employee-') && // Server IDs contain employee info
+        reconciliationId.length > 30; // Server IDs are long
+        
+      const isLocalReconciliation = !isServerReconciliation;
+
+      console.log('Approval Debug:', {
+        reconciliationId,
+        isServerReconciliation,
+        isLocalReconciliation,
+        hasReconciliation: !!reconciliation,
+        reconciliationFlags: {
+          syncStatus: reconciliation?.syncStatus,
+          localUpdate: reconciliation?.localUpdate
+        }
+      });
 
       if (isLocalReconciliation) {
         // Update locally without API call
@@ -278,11 +293,14 @@ const OwnerReconciliationReview = () => {
       }
 
       // Try API update for server-stored reconciliations
+      console.log('Attempting API approval for:', reconciliationId);
       const result = await reconciliationService.updateReconciliationStatus(
         reconciliationId,
         'approved',
         'Approved by manager'
       );
+      
+      console.log('API approval result:', result);
       
       if (result.success) {
         setReconciliations(prev => prev.map(rec =>
