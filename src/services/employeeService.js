@@ -71,22 +71,32 @@ export const employeeService = {
    */
   async createEmployee(employeeData) {
     try {
-      const response = await apiClient.post('/employees', {
+      const requestData = {
         name: employeeData.name,
-        pin: employeeData.pin,
-        mobile: employeeData.mobile,
-        hasReconciliationAccess: employeeData.hasReconciliationAccess || false,
-        status: 'active'
-      });
+        userType: employeeData.hasReconciliationAccess ? 'manager' : 'employee',
+        email: employeeData.email || `${employeeData.name.toLowerCase().replace(/\s+/g, '.')}@smartbite.com`
+      };
 
-      if (response.success && response.employee) {
-        return {
-          success: true,
-          data: response.employee,
-          message: 'Employee created successfully'
-        };
+      // Add PIN if provided (API will auto-generate if not provided)
+      if (employeeData.pin && employeeData.pin.trim()) {
+        requestData.pin = employeeData.pin;
+      }
+
+      const response = await apiClient.post('/employees', requestData);
+
+      if (response.success) {
+        // API is working, check for employee data in response
+        if (response.employee) {
+          return {
+            success: true,
+            data: response.employee,
+            message: response.message || 'Employee created successfully'
+          };
+        } else {
+          throw new Error('Employee created but no employee data returned');
+        }
       } else {
-        throw new Error(response.error || 'Failed to create employee');
+        throw new Error(response.error || response.message || 'Failed to create employee');
       }
     } catch (error) {
       console.error('Failed to create employee:', error);
@@ -107,13 +117,18 @@ export const employeeService = {
    */
   async updateEmployee(employeeId, employeeData) {
     try {
-      const response = await apiClient.put(`/employees/${employeeId}`, {
+      const requestData = {
         name: employeeData.name,
-        pin: employeeData.pin,
-        mobile: employeeData.mobile,
-        hasReconciliationAccess: employeeData.hasReconciliationAccess,
-        status: employeeData.status || 'active'
-      });
+        userType: employeeData.hasReconciliationAccess ? 'manager' : 'employee',
+        email: employeeData.email || `${employeeData.name.toLowerCase().replace(/\s+/g, '.')}@smartbite.com`
+      };
+
+      // Add PIN if provided (will update PIN if not empty)
+      if (employeeData.pin && employeeData.pin.trim()) {
+        requestData.pin = employeeData.pin;
+      }
+
+      const response = await apiClient.put(`/employees/${employeeId}`, requestData);
 
       if (response.success && response.employee) {
         return {
@@ -163,17 +178,6 @@ export const employeeService = {
     }
   },
 
-  /**
-   * Generate employee ID from name
-   * @param {string} name - Employee name
-   * @returns {string} Generated employee ID
-   */
-  generateEmployeeId(name) {
-    // Generate employee ID like "employee-001" based on name
-    const baseName = name.toLowerCase().replace(/[^a-z]/g, '');
-    const timestamp = Date.now().toString().slice(-3);
-    return `${baseName.substring(0, 5)}-${timestamp}`;
-  }
 };
 
 export default employeeService;

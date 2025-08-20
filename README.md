@@ -139,13 +139,14 @@ The application integrates with a live Azure Functions backend at:
   "success": true,
   "employees": [
     {
-      "employeeId": "employee-001",
+      "id": "emp-1755660736254",
       "name": "John Smith",
-      "pin": "1234",
-      "mobile": "0412345678",
-      "hasReconciliationAccess": true,
-      "status": "active",
-      "createdAt": "2025-01-15T00:00:00Z"
+      "userType": "manager",
+      "email": "john@smartbite.com",
+      "pin": "1697",
+      "isActive": true,
+      "createdAt": "2025-08-20T03:32:16.257Z",
+      "tenantId": "tenant-001"
     }
   ],
   "count": 1
@@ -155,30 +156,49 @@ The application integrates with a live Azure Functions backend at:
 **Create Employee**: `POST /employees`
 ```json
 {
-  "employeeId": "employee-002",
   "name": "Jane Doe",
-  "pin": "5678",
-  "mobile": "0423456789",
-  "hasReconciliationAccess": false
+  "userType": "employee",
+  "email": "jane@smartbite.com"
 }
 ```
 
-**Update Employee**: `PUT /employees/{employeeId}`
-```json
-{
-  "name": "Jane Smith",
-  "pin": "9999",
-  "mobile": "0423456789",
-  "hasReconciliationAccess": true,
-  "status": "active"
-}
-```
-
-**Delete Employee**: `DELETE /employees/{employeeId}`
+**Response**: 
 ```json
 {
   "success": true,
-  "message": "Employee deleted successfully"
+  "message": "Employee created successfully",
+  "employee": {
+    "id": "emp-1755660993035",
+    "name": "Jane Doe",
+    "userType": "employee",
+    "email": "jane@smartbite.com",
+    "pin": "4977",
+    "isActive": true,
+    "createdAt": "2025-08-20T03:36:33.035Z",
+    "tenantId": "tenant-001"
+  }
+}
+```
+
+**Update Employee**: `PUT /employees/{id}`
+```json
+{
+  "name": "Jane Smith",
+  "userType": "manager",
+  "email": "jane.smith@smartbite.com"
+}
+```
+
+**Delete Employee**: `DELETE /employees/{id}`
+```json
+{
+  "success": true,
+  "message": "Employee deactivated successfully",
+  "employee": {
+    "id": "emp-123",
+    "isActive": false,
+    "deactivatedAt": "2025-08-20T03:32:58.313Z"
+  }
 }
 ```
 

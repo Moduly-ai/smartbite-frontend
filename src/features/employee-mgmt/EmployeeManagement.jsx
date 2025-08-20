@@ -8,10 +8,9 @@ const EmployeeManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    employeeId: '',
     name: '',
+    email: '',
     pin: '',
-    mobile: '',
     hasReconciliationAccess: false
   });
 
@@ -41,18 +40,17 @@ const EmployeeManagement = () => {
   };
 
   const handleAddEmployee = () => {
-    setFormData({ employeeId: '', name: '', pin: '', mobile: '', hasReconciliationAccess: false });
+    setFormData({ name: '', email: '', pin: '', hasReconciliationAccess: false });
     setEditingEmployee(null);
     setShowAddModal(true);
   };
 
   const handleEditEmployee = (employee) => {
     setFormData({
-      employeeId: employee.employeeId || employee.id,
       name: employee.name,
-      pin: employee.pin,
-      mobile: employee.mobile,
-      hasReconciliationAccess: employee.hasReconciliationAccess
+      email: employee.email,
+      pin: employee.pin || '',
+      hasReconciliationAccess: employee.userType === 'manager'
     });
     setEditingEmployee(employee);
     setShowAddModal(true);
@@ -64,14 +62,10 @@ const EmployeeManagement = () => {
       
       if (editingEmployee) {
         // Update existing employee
-        result = await employeeService.updateEmployee(editingEmployee.employeeId || editingEmployee.id, formData);
+        result = await employeeService.updateEmployee(editingEmployee.id, formData);
       } else {
-        // Create new employee - generate employeeId if not provided
-        const employeeData = {
-          ...formData,
-          employeeId: formData.employeeId || employeeService.generateEmployeeId(formData.name)
-        };
-        result = await employeeService.createEmployee(employeeData);
+        // Create new employee
+        result = await employeeService.createEmployee(formData);
       }
 
       if (result.success) {
@@ -80,18 +74,18 @@ const EmployeeManagement = () => {
         setShowAddModal(false);
         setError(null);
       } else {
-        setError(result.message);
+        setError(result.message || result.error);
       }
     } catch (error) {
       console.error('Failed to save employee:', error);
-      setError('Failed to save employee');
+      setError(error.message || 'Failed to save employee');
     }
   };
 
   const handleDeleteEmployee = async (employee) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        const result = await employeeService.deleteEmployee(employee.employeeId || employee.id);
+        const result = await employeeService.deleteEmployee(employee.id);
         
         if (result.success) {
           // Reload employees from server
@@ -110,11 +104,13 @@ const EmployeeManagement = () => {
   const toggleReconciliationAccess = async (employee) => {
     try {
       const updatedData = {
-        ...employee,
-        hasReconciliationAccess: !employee.hasReconciliationAccess
+        name: employee.name,
+        email: employee.email,
+        pin: employee.pin, // Keep existing PIN
+        hasReconciliationAccess: employee.userType !== 'manager' // Toggle the access
       };
       
-      const result = await employeeService.updateEmployee(employee.employeeId || employee.id, updatedData);
+      const result = await employeeService.updateEmployee(employee.id, updatedData);
       
       if (result.success) {
         // Reload employees from server
@@ -192,8 +188,8 @@ const EmployeeManagement = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">{employee.name}</h4>
-                  <p className="text-sm text-gray-600">{employee.employeeId || employee.id}</p>
-                  <p className="text-xs text-gray-500">{employee.mobile}</p>
+                  <p className="text-sm text-gray-600">{employee.id}</p>
+                  <p className="text-xs text-gray-500">{employee.email}</p>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -222,12 +218,12 @@ const EmployeeManagement = () => {
                 <button
                   onClick={() => toggleReconciliationAccess(employee)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    employee.hasReconciliationAccess ? 'bg-blue-600' : 'bg-gray-300'
+                    employee.userType === 'manager' ? 'bg-blue-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      employee.hasReconciliationAccess ? 'translate-x-6' : 'translate-x-1'
+                      employee.userType === 'manager' ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -248,11 +244,11 @@ const EmployeeManagement = () => {
               </div>
 
               <div className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                employee.hasReconciliationAccess
+                employee.userType === 'manager'
                   ? 'bg-green-100 text-green-800'
                   : 'bg-gray-100 text-gray-800'
               }`}>
-                {employee.hasReconciliationAccess ? 'Full Access' : 'Limited Access'}
+                {employee.userType === 'manager' ? 'Manager Access' : 'Employee Access'}
               </div>
             </div>
           </div>
@@ -269,19 +265,15 @@ const EmployeeManagement = () => {
             
             <form onSubmit={(e) => { e.preventDefault(); handleSaveEmployee(); }} className="space-y-4">
               <div>
-                <label className="form-label">Employee ID</label>
+                <label className="form-label">Email Address</label>
                 <input
-                  type="text"
+                  type="email"
                   required
                   className="form-input"
-                  value={formData.employeeId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, employeeId: e.target.value }))}
-                  placeholder="e.g., employee-001 (auto-generated if empty)"
-                  disabled={editingEmployee}
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="employee@smartbite.com"
                 />
-                {editingEmployee && (
-                  <p className="text-xs text-gray-500 mt-1">Employee ID cannot be changed</p>
-                )}
               </div>
 
               <div>
@@ -299,27 +291,17 @@ const EmployeeManagement = () => {
               <div>
                 <label className="form-label">PIN (4 digits)</label>
                 <input
-                  type="password"
-                  required
+                  type="text"
                   className="form-input"
                   value={formData.pin}
                   onChange={(e) => setFormData(prev => ({ ...prev, pin: e.target.value }))}
-                  placeholder="Enter 4-digit PIN"
+                  placeholder={editingEmployee ? "Current PIN or enter new PIN" : "Leave empty for auto-generated PIN"}
                   maxLength="4"
                   pattern="[0-9]{4}"
                 />
-              </div>
-
-              <div>
-                <label className="form-label">Mobile Number</label>
-                <input
-                  type="tel"
-                  required
-                  className="form-input"
-                  value={formData.mobile}
-                  onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
-                  placeholder="0412345678"
-                />
+                {!editingEmployee && (
+                  <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate a PIN</p>
+                )}
               </div>
 
               <div className="flex items-center justify-between">
