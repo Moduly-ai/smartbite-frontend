@@ -130,21 +130,21 @@ const OwnerDashboard = ({ user, onLogout }) => {
       <div className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 ease-in-out flex flex-col shadow-2xl
         ${sidebarOpen 
           ? 'fixed inset-y-0 left-0 z-50 w-72 lg:relative lg:z-auto lg:w-72' 
-          : 'hidden lg:relative lg:z-auto lg:flex lg:w-20'
+          : 'hidden lg:relative lg:z-auto lg:flex lg:w-16'
         }`}>
         
         {/* Header */}
-        <div className="p-6">
-          <div className="flex items-center justify-between">
+        <div className={`p-6 ${!sidebarOpen ? 'lg:p-2 lg:flex lg:justify-center' : ''}`}>
+          <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'lg:justify-center'}`}>
             <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 lg:hidden'}`}>
               <h1 className="text-2xl font-bold text-white">SmartBite</h1>
               <p className="text-slate-300 text-base">Owner Portal</p>
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-3 rounded-lg hover:bg-slate-700 transition-colors"
+              className={`p-3 rounded-lg hover:bg-slate-700 transition-colors ${!sidebarOpen ? 'lg:p-2' : ''}`}
             >
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`${sidebarOpen ? 'w-7 h-7' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -152,7 +152,7 @@ const OwnerDashboard = ({ user, onLogout }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-6 py-4">
+        <nav className={`flex-1 py-4 ${sidebarOpen ? 'px-6' : 'px-2 lg:px-1'}`}>
           <ul className="space-y-3">
             {menuItems.map((item) => (
               <li key={item.id}>
@@ -164,14 +164,19 @@ const OwnerDashboard = ({ user, onLogout }) => {
                       setSidebarOpen(false);
                     }
                   }}
-                  className={`w-full flex items-center px-4 py-4 rounded-lg transition-all duration-200 text-left ${
+                  className={`w-full flex items-center rounded-lg transition-all duration-200 text-left ${
+                    sidebarOpen 
+                      ? 'px-4 py-4' 
+                      : 'px-2 py-3 lg:justify-center lg:px-1'
+                  } ${
                     activeModule === item.id
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                   }`}
+                  title={!sidebarOpen ? item.name : undefined}
                 >
                   <div className="flex-shrink-0">
-                    {React.cloneElement(item.icon, { className: "w-7 h-7" })}
+                    {React.cloneElement(item.icon, { className: "w-6 h-6" })}
                   </div>
                   <span className={`ml-4 transition-all duration-300 text-base font-medium ${
                     sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 lg:hidden'
@@ -185,9 +190,9 @@ const OwnerDashboard = ({ user, onLogout }) => {
         </nav>
 
         {/* User Info & Logout */}
-        <div className="p-6 border-t border-slate-700">
-          <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 lg:hidden'}`}>
-            <div className="flex items-center mb-4">
+        <div className={`border-t border-slate-700 ${sidebarOpen ? 'p-6' : 'p-2 lg:p-1'}`}>
+          <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100 mb-4' : 'opacity-0 lg:hidden mb-2'}`}>
+            <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-base">
                   {user.name.charAt(0)}
@@ -203,9 +208,12 @@ const OwnerDashboard = ({ user, onLogout }) => {
           </div>
           <button
             onClick={onLogout}
-            className={`w-full flex items-center px-4 py-3 text-slate-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors ${
-              !sidebarOpen ? 'justify-center' : ''
+            className={`w-full flex items-center text-slate-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors ${
+              sidebarOpen 
+                ? 'px-4 py-3' 
+                : 'px-2 py-3 lg:justify-center lg:px-1'
             }`}
+            title={!sidebarOpen ? 'Logout' : undefined}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
