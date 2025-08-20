@@ -6,6 +6,26 @@ import ConfigurationSettings from '../owner/ConfigurationSettings';
 const OwnerDashboard = ({ user, onLogout }) => {
   const [activeModule, setActiveModule] = useState('reconciliations');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Initialize sidebar state based on screen size
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        // Desktop: start with collapsed sidebar (can be toggled)
+        setSidebarOpen(false);
+      } else {
+        // Mobile: hide sidebar by default
+        setSidebarOpen(false);
+      }
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    // Listen for resize events
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [showConfiguration, setShowConfiguration] = useState(false);
 
   const menuItems = [
@@ -106,15 +126,17 @@ const OwnerDashboard = ({ user, onLogout }) => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'w-72' : 'w-20'
-      } flex flex-col shadow-2xl relative z-50`}>
+      {/* Sidebar - Always visible on desktop, toggle on mobile */}
+      <div className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 ease-in-out flex flex-col shadow-2xl
+        ${sidebarOpen 
+          ? 'fixed inset-y-0 left-0 z-50 w-72 lg:relative lg:z-auto lg:w-72' 
+          : 'hidden lg:relative lg:z-auto lg:flex lg:w-20'
+        }`}>
         
         {/* Header */}
         <div className="p-6">
           <div className="flex items-center justify-between">
-            <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 lg:hidden'}`}>
               <h1 className="text-2xl font-bold text-white">SmartBite</h1>
               <p className="text-slate-300 text-base">Owner Portal</p>
             </div>
@@ -135,7 +157,13 @@ const OwnerDashboard = ({ user, onLogout }) => {
             {menuItems.map((item) => (
               <li key={item.id}>
                 <button
-                  onClick={() => setActiveModule(item.id)}
+                  onClick={() => {
+                    setActiveModule(item.id);
+                    // Close sidebar on mobile after menu selection
+                    if (window.innerWidth < 1024) {
+                      setSidebarOpen(false);
+                    }
+                  }}
                   className={`w-full flex items-center px-4 py-4 rounded-lg transition-all duration-200 text-left ${
                     activeModule === item.id
                       ? 'bg-blue-600 text-white shadow-lg'
@@ -146,7 +174,7 @@ const OwnerDashboard = ({ user, onLogout }) => {
                     {React.cloneElement(item.icon, { className: "w-7 h-7" })}
                   </div>
                   <span className={`ml-4 transition-all duration-300 text-base font-medium ${
-                    sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                    sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 lg:hidden'
                   }`}>
                     {item.name}
                   </span>
@@ -158,7 +186,7 @@ const OwnerDashboard = ({ user, onLogout }) => {
 
         {/* User Info & Logout */}
         <div className="p-6 border-t border-slate-700">
-          <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 lg:hidden'}`}>
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-base">
@@ -183,7 +211,7 @@ const OwnerDashboard = ({ user, onLogout }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span className={`ml-4 transition-all duration-300 text-base font-medium ${
-              sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+              sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 lg:hidden'
             }`}>
               Logout
             </span>
@@ -196,13 +224,24 @@ const OwnerDashboard = ({ user, onLogout }) => {
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {menuItems.find(item => item.id === activeModule)?.name || 'Dashboard'}
-              </h2>
-              <p className="text-gray-600">
-                Manage your business reconciliations and employees
-              </p>
+            <div className="flex items-center">
+              {/* Mobile Hamburger Button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4 lg:hidden"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {menuItems.find(item => item.id === activeModule)?.name || 'Dashboard'}
+                </h2>
+                <p className="text-gray-600">
+                  Manage your business reconciliations and employees
+                </p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
