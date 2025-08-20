@@ -9,7 +9,8 @@
 ### ✅ FULLY OPERATIONAL
 - **Authentication**: Employee/Owner login with JWT Bearer tokens
 - **Configuration Management**: Real-time multi-device sync with API integration
-- **Cash Reconciliation**: Complete workflow with validation and calculations
+- **Cash Reconciliation**: Complete end-to-end workflow with bag number tracking
+- **Owner Approval System**: Full approve/reject workflow with local/server sync
 - **API Integration**: Live backend connection to Azure Functions
 - **Deployment**: Production-ready on Azure Static Web Apps
 

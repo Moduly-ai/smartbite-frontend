@@ -30,6 +30,7 @@ const EmployeeReconciliation = ({ user }) => {
       loose: { dollars: '', fifties: '', twenties: '', tens: '', fives: '' },
       coinBags: { dollars: '', twos: '', fifties: '', twenties: '', tens: '', fives: '' }
     },
+    bagNumber: '',
     comments: ''
   });
 
@@ -299,6 +300,7 @@ const EmployeeReconciliation = ({ user }) => {
           isBalanced: Math.abs(calculations.variance || 0) < 0.01,
           ...calculations
         },
+        bagNumber: formData.bagNumber || '',
         comments: formData.comments || ''
       };
 
@@ -344,6 +346,7 @@ const EmployeeReconciliation = ({ user }) => {
             totalSales: '',
             eftpos: {},
             payouts: '',
+            bagNumber: '',
             comments: ''
           };
 
@@ -573,6 +576,17 @@ const EmployeeReconciliation = ({ user }) => {
                   : '❌ Significant Variance - Add Comments'}
             </p>
           </div>
+        </div>
+
+        <div>
+          <label className="form-label">Bag Number</label>
+          <input
+            type="text"
+            className="form-input"
+            value={formData.bagNumber}
+            onChange={(e) => handleInputChange('bagNumber', e.target.value)}
+            placeholder="Enter bag number for cash deposit..."
+          />
         </div>
 
         <div>

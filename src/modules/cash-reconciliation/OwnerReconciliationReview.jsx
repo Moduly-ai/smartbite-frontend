@@ -461,6 +461,13 @@ const OwnerReconciliationReview = () => {
                     ${(reconciliation.summary?.variance || reconciliation.calculations?.variance || reconciliation.variance || 0).toFixed(2)}
                   </span>
                 </div>
+                
+                {(reconciliation.bagNumber || reconciliation.formData?.bagNumber) && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Bag Number</span>
+                    <span className="font-medium text-blue-600">{reconciliation.bagNumber || reconciliation.formData?.bagNumber}</span>
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
@@ -535,6 +542,12 @@ const OwnerReconciliationReview = () => {
                         {selectedReconciliation.status.replace('_', ' ').toUpperCase()}
                       </span>
                     </div>
+                    {(selectedReconciliation.bagNumber || selectedReconciliation.formData?.bagNumber) && (
+                      <div>
+                        <span className="text-gray-600">Bag Number:</span>
+                        <span className="ml-2 font-medium text-blue-600">{selectedReconciliation.bagNumber || selectedReconciliation.formData?.bagNumber}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
