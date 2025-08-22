@@ -34,9 +34,18 @@ const RegisterComponent = ({
               <input
                 type="number"
                 className="form-input"
+                min="0"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={registerData[key] || ''}
-                onChange={(e) => onInputChange(`register${registerNumber}.${key}`, e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) {
+                    onInputChange(`register${registerNumber}.${key}`, val);
+                  }
+                }}
                 placeholder="0"
+                onWheel={e => e.target.blur()}
               />
             </div>
           ))}
@@ -51,6 +60,7 @@ const RegisterComponent = ({
         <h4 className="text-lg font-medium mb-4">Loose Coins</h4>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
+            { label: '$2', key: 'twos' },
             { label: '$1', key: 'dollars' },
             { label: '50¢', key: 'fifties' },
             { label: '20¢', key: 'twenties' },
@@ -63,9 +73,18 @@ const RegisterComponent = ({
                 type="number"
                 step="1"
                 className="form-input"
+                min="0"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={registerData.loose?.[key] || ''}
-                onChange={(e) => onInputChange(`register${registerNumber}.loose.${key}`, e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) {
+                    onInputChange(`register${registerNumber}.loose.${key}`, val);
+                  }
+                }}
                 placeholder="0"
+                onWheel={e => e.target.blur()}
               />
             </div>
           ))}
@@ -92,9 +111,18 @@ const RegisterComponent = ({
               <input
                 type="number"
                 className="form-input"
+                min="0"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={registerData.coinBags?.[key] || ''}
-                onChange={(e) => onInputChange(`register${registerNumber}.coinBags.${key}`, e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) {
+                    onInputChange(`register${registerNumber}.coinBags.${key}`, val);
+                  }
+                }}
                 placeholder="0"
+                onWheel={e => e.target.blur()}
               />
             </div>
           ))}
