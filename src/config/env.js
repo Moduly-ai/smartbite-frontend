@@ -5,7 +5,7 @@
 
 export const env = {
   // API Configuration
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://func-smartbite-reconciliation.azurewebsites.net/api',
   API_TIMEOUT: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   
   // Application Configuration
@@ -16,6 +16,10 @@ export const env = {
   NODE_ENV: import.meta.env.NODE_ENV || 'development',
   PROD: import.meta.env.PROD,
   DEV: import.meta.env.DEV,
+  
+  // Production Configuration
+  ENABLE_LOGGING: import.meta.env.VITE_ENABLE_LOGGING !== 'false',
+  SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
 };
 
 // Validate required environment variables

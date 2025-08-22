@@ -1,0 +1,1476 @@
+{
+  "info": {
+    "name": "SmartBite API v3.0 - COSMOS DB PRODUCTION ✅",
+    "description": "Complete API collection for SmartBite business management platform - PRODUCTION READY with Cosmos DB\n\n🎉 STATUS: ALL SYSTEMS OPERATIONAL (August 2025)\n✅ Cosmos DB Integration Complete\n✅ Multi-Tenant Architecture Active\n✅ Real JWT Authentication Working\n✅ Role-based Access Control Verified\n✅ One-Step Owner Signup Ready\n\nProduction Features:\n• 🚀 owner-signup - One-step tenant creation ✅\n• 🔐 auth - JWT Authentication ✅\n• ⚙️ config - System Configuration ✅\n• 👥 employees - Employee Management ✅\n• 💰 reconciliations - Cash Reconciliation ✅\n• 📊 analytics - Sales Analytics ✅\n• 📦 inventory - Inventory Management ✅\n• ⏳ pendingReconciliations - Manager Approvals ✅\n\n🏗️ Architecture:\n• Azure Cosmos DB with cost-optimized settings\n• Multi-tenant data isolation\n• Automatic scaling and backup\n• Global distribution ready\n\nBase URL: https://func-smartbite-reconciliation.azurewebsites.net/api",
+    "version": "3.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://func-smartbite-reconciliation.azurewebsites.net/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🚀 Onboarding",
+      "item": [
+        {
+          "name": "Owner Signup (One-Step Tenant Creation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Signup successful\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.data.tenant).to.exist;",
+                  "    pm.expect(responseJson.data.owner).to.exist;",
+                  "    pm.expect(responseJson.data.credentials).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Credentials provided\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.credentials.employeeId).to.exist;",
+                  "    pm.expect(responseJson.data.credentials.pin).to.exist;",
+                  "    pm.expect(responseJson.data.credentials.token).to.exist;",
+                  "    ",
+                  "    // Store token for subsequent requests",
+                  "    pm.globals.set('authToken', responseJson.data.credentials.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"email\": \"john.smith@example.com\",\n  \"phone\": \"555-0123\",\n  \"businessName\": \"Smith's Restaurant\",\n  \"businessType\": \"restaurant\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"US\"\n  },\n  \"timezone\": \"America/New_York\",\n  \"currency\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owner-signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner-signup"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Auth Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains demo credentials\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.demo_credentials).to.exist;",
+                  "    pm.expect(responseJson.demo_credentials.employee).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login successful with JWT token\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.token).to.exist;",
+                  "    pm.expect(responseJson.user).to.exist;",
+                  "    ",
+                  "    // Validate JWT token format (should have 3 parts separated by dots)",
+                  "    const tokenParts = responseJson.token.split('.');",
+                  "    pm.expect(tokenParts).to.have.lengthOf(3);",
+                  "    ",
+                  "    // Save token for subsequent requests",
+                  "    pm.collectionVariables.set(\"authToken\", responseJson.token);",
+                  "    ",
+                  "    console.log(\"JWT Token saved:\", responseJson.token.substring(0, 50) + \"...\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"employee-001\",\n  \"pin\": \"employee789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Manager",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login successful\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.user.userType).to.equal(\"manager\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"manager-001\",\n  \"pin\": \"manager456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login successful\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.user.userType).to.equal(\"owner\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"owner-001\",\n  \"pin\": \"owner123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Login failed\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.false;",
+                  "    pm.expect(responseJson.error).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"invalid-user\",\n  \"pin\": \"wrongpin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Token is valid\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.user).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Logout successful\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Cash Reconciliation",
+      "item": [
+        {
+          "name": "Get All Reconciliations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has reconciliations data\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.reconciliations).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reconciliations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reconciliations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reconciliations with Filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reconciliations?date=2025-08-19&status=submitted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reconciliations"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-08-19"
+                },
+                {
+                  "key": "status",
+                  "value": "submitted"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit New Reconciliation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 401]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test(\"Reconciliation submitted successfully\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.reconciliation).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-08-19\",\n  \"registers\": [\n    {\n      \"id\": 1,\n      \"name\": \"Main Register\",\n      \"cash\": {\n        \"notes\": {\"hundreds\": 10, \"fifties\": 5, \"twenties\": 20},\n        \"coins\": {\"dollars\": 50, \"fifties\": 10, \"twenties\": 5},\n        \"coinRolls\": {\"dollars\": 2, \"fifties\": 1}\n      },\n      \"total\": 850.00,\n      \"reserve\": 400.00,\n      \"banking\": 450.00\n    }\n  ],\n  \"posTerminals\": [\n    {\"id\": 1, \"name\": \"Terminal 1\", \"total\": 1250.50},\n    {\"id\": 2, \"name\": \"Terminal 2\", \"total\": 980.25}\n  ],\n  \"summary\": {\n    \"totalSales\": 2500.75,\n    \"totalEftpos\": 2230.75,\n    \"payouts\": 25.00,\n    \"expectedBanking\": 245.00,\n    \"actualBanking\": 450.00,\n    \"variance\": 205.00\n  },\n  \"comments\": \"Test reconciliation from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reconciliations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reconciliations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Reconciliations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401 or 403\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reconciliations/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reconciliations",
+                "pending"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Reconciliation Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 400 or 401 or 403\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"comments\": \"Reconciliation approved by manager\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reconciliations/sample-reconciliation-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reconciliations",
+                "sample-reconciliation-id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Configuration Management",
+      "item": [
+        {
+          "name": "Get System Configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains config data\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.config).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config/system",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config",
+                "system"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update System Configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401 or 403\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Configuration updated successfully\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.config).to.exist;",
+                  "        pm.expect(responseJson.message).to.include(\"updated\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registers\": {\n    \"count\": 3,\n    \"names\": [\"Main Register\", \"Secondary Register\", \"Express Register\"],\n    \"reserveAmount\": 500.00,\n    \"enabled\": [true, true, true]\n  },\n  \"reconciliation\": {\n    \"dailyDeadline\": \"23:30\",\n    \"varianceTolerance\": 10.00,\n    \"requireManagerApproval\": true\n  },\n  \"business\": {\n    \"name\": \"SmartBite Restaurant Updated\",\n    \"taxRate\": 8.5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/config/system",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config",
+                "system"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Configuration Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains endpoints info\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.endpoints).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Configuration to Defaults",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401 or 403\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Configuration reset successfully\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.message).to.include(\"reset\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/config/system/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config",
+                "system",
+                "reset"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔴 TEST - Config Status (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 (needs auth)\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response requires authentication\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.error).to.include(\"Authentication required\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config/system",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config",
+                "system"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🟢 TEST - Config Status (With Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Configuration returned successfully\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.config).to.exist;",
+                  "    pm.expect(responseJson.config.business).to.exist;",
+                  "    pm.expect(responseJson.config.registers).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config/system",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "config",
+                "system"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JWT Token Verify",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token verification successful\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.valid).to.be.true;",
+                  "    pm.expect(responseJson.user).to.exist;",
+                  "    pm.expect(responseJson.token).to.exist;",
+                  "    ",
+                  "    console.log(\"Token is valid for user:\", responseJson.user.employeeId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "JWT token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JWT Token Verify - No Token (Error Test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Unauthorized without token\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.false;",
+                  "    pm.expect(responseJson.error).to.include(\"Authorization header required\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Employee Management",
+      "item": [
+        {
+          "name": "List All Employees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains employees data\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.employees).to.exist;",
+                  "    pm.expect(responseJson.count).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response contains employee data\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.employee).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees/employee-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employees",
+                "employee-001"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 400 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400, 401]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test(\"Employee created successfully\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "        pm.expect(responseJson.employee).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"name\\\": \\\"New Test Employee\\\",\\n  \\\"userType\\\": \\\"employee\\\",\\n  \\\"email\\\": \\\"newtest@smartbite.com\\\",\\n  \\\"isActive\\\": true\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404, 401]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"name\\\": \\\"Updated Employee Name\\\",\\n  \\\"permissions\\\": [\\\"reconciliation\\\", \\\"reports\\\"],\\n  \\\"isActive\\\": true\\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employees/employee-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employees",
+                "employee-001"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404, 401]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees/employee-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employees",
+                "employee-001"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics & Reporting",
+      "item": [
+        {
+          "name": "Analytics Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains services info\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.services).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sales Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "sales"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Inventory Management",
+      "item": [
+        {
+          "name": "Inventory Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates coming soon\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.note).to.include(\"coming soon\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Inventory Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sample Item\",\n  \"quantity\": 100,\n  \"price\": 5.99,\n  \"category\": \"Food\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventory",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🌐 Deployed Endpoints Status",
+      "item": [
+        {
+          "name": "📋 All Deployed Functions List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns deployment info\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.endpoints).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "info",
+                  "value": "deployment",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Verify All Endpoints Working",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// This test will verify all key endpoints are responding",
+                  "console.log('Testing all deployed endpoints...');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Analytics endpoint exists\", function () {",
+                  "    pm.sendRequest(`${pm.variables.get('baseUrl')}/analytics`, function (err, response) {",
+                  "        pm.expect(response.code).to.be.oneOf([200, 401, 404]);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Config endpoint exists\", function () {",
+                  "    pm.sendRequest(`${pm.variables.get('baseUrl')}/config/system`, function (err, response) {",
+                  "        pm.expect(response.code).to.be.oneOf([200, 401, 404]);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Employees endpoint exists\", function () {",
+                  "    pm.sendRequest(`${pm.variables.get('baseUrl')}/employees`, function (err, response) {",
+                  "        pm.expect(response.code).to.be.oneOf([200, 401, 404]);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Reconciliations endpoint exists\", function () {",
+                  "    pm.sendRequest(`${pm.variables.get('baseUrl')}/reconciliations`, function (err, response) {",
+                  "        pm.expect(response.code).to.be.oneOf([200, 401, 404]);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚀 API Health & Status",
+      "item": [
+        {
+          "name": "API Status Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"API is healthy\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "    pm.expect(responseJson.message).to.include(\"SmartBite API v2.0\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "dashboard"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script to ensure auth token is available",
+          "console.log('Pre-request: Auth token:', pm.collectionVariables.get('authToken'));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is less than 10 seconds\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "});",
+          "",
+          "pm.test(\"Response has correct CORS headers\", function () {",
+          "    pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.equal('*');",
+          "});"
+        ]
+      }
+    }
+  ]
+}

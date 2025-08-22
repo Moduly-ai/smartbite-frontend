@@ -7,6 +7,60 @@ import apiClient from './apiClient.js';
 
 export const authService = {
   /**
+   * Owner signup - One-step tenant creation
+   * @param {Object} signupData - Owner signup data
+   * @returns {Promise<Object>} Signup result
+   */
+  async ownerSignup(signupData) {
+    try {
+      const response = await apiClient.post('/owner-signup', signupData);
+      
+      if (response.success && response.data) {
+        const { credentials, tenant } = response.data;
+        
+        // Auto-login the new owner with provided credentials
+        if (credentials?.token) {
+          apiClient.setAuthToken(credentials.token);
+          const sessionData = {
+            user: {
+              employeeId: credentials.employeeId,
+              userType: 'owner',
+              name: `${signupData.firstName} ${signupData.lastName}`,
+              email: signupData.email,
+              tenantId: tenant.id
+            },
+            token: credentials.token,
+            expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
+            loginTime: new Date().toISOString()
+          };
+          localStorage.setItem('smartbite-session', JSON.stringify(sessionData));
+        }
+        
+        return {
+          success: true,
+          data: response.data,
+          user: sessionData.user,
+          credentials: credentials,
+          message: 'Account created successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error || 'Signup failed',
+          message: 'Account creation failed'
+        };
+      }
+    } catch (error) {
+      console.error('Owner signup failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Signup failed',
+        message: 'Account creation failed due to error'
+      };
+    }
+  },
+
+  /**
    * Authenticate user with PIN
    * @param {string} employeeId - Employee ID (e.g., 'employee-001', 'manager-001', 'owner-001')
    * @param {string} pin - User PIN
@@ -18,12 +72,8 @@ export const authService = {
         employeeId,
         pin
       });
-
       if (response.success && response.token) {
-        // Store token for future requests
         apiClient.setAuthToken(response.token);
-        
-        // Store user session in localStorage
         const sessionData = {
           user: response.user,
           token: response.token,
@@ -31,7 +81,6 @@ export const authService = {
           loginTime: new Date().toISOString()
         };
         localStorage.setItem('smartbite-session', JSON.stringify(sessionData));
-
         return {
           success: true,
           user: response.user,
@@ -39,89 +88,18 @@ export const authService = {
           message: 'Login successful'
         };
       } else {
-        throw new Error(response.error || 'Login failed');
+        return {
+          success: false,
+          error: response.error || 'Login failed',
+          message: 'Invalid credentials'
+        };
       }
     } catch (error) {
       console.error('API authentication failed:', error);
-      console.error('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      });
-      
       return {
         success: false,
-        error: error.message,
-        message: error.message.includes('Login failed') ? 'Invalid credentials' : 'Authentication failed. Please try again.'
-      };
-    }
-  },
-
-  /**
-   * Mock authentication for development/fallback
-   * @param {string} employeeId - Employee ID
-   * @param {string} pin - User PIN
-   * @returns {Object} Authentication result
-   */
-  mockLogin(employeeId, pin) {
-    const mockUsers = [
-      { 
-        employeeId: 'employee-001',
-        name: 'John Smith', 
-        pin: 'employee789', 
-        userType: 'employee',
-        hasReconciliationAccess: true,
-        permissions: ['reconciliation']
-      },
-      { 
-        employeeId: 'manager-001',
-        name: 'Jane Manager', 
-        pin: 'manager456', 
-        userType: 'manager',
-        hasReconciliationAccess: true,
-        permissions: ['reconciliation', 'reports']
-      },
-      { 
-        employeeId: 'owner-001',
-        name: 'Owner Admin', 
-        pin: 'owner123', 
-        userType: 'owner',
-        permissions: ['reconciliation', 'reports', 'configuration', 'employee-management']
-      }
-    ];
-
-    const user = mockUsers.find(u => 
-      u.employeeId === employeeId && u.pin === pin
-    );
-
-    if (user) {
-      const session = {
-        user: {
-          id: user.employeeId,
-          name: user.name,
-          userType: user.userType,
-          hasReconciliationAccess: user.hasReconciliationAccess,
-          permissions: user.permissions,
-          tenantId: 'tenant-001'
-        },
-        token: 'mock-jwt-token-' + Date.now(),
-        expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
-        loginTime: new Date().toISOString()
-      };
-
-      localStorage.setItem('smartbite-session', JSON.stringify(session));
-
-      return {
-        success: true,
-        user: session.user,
-        token: session.token,
-        message: 'Login successful (Mock)'
-      };
-    } else {
-      return {
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Invalid credentials'
+        error: error.message || 'Login failed',
+        message: 'Login failed due to error'
       };
     }
   },
@@ -157,21 +135,15 @@ export const authService = {
    */
   async verifySession() {
     const session = this.getSession();
-    
     if (!session) {
       return { success: false, message: 'No session found' };
     }
-
-    // Check if session has expired
     if (Date.now() > session.expiresAt) {
-      this.logout();
+      await this.logout();
       return { success: false, message: 'Session expired' };
     }
-
     try {
-      // Verify with API if available
       const response = await apiClient.get('/auth/verify');
-      
       if (response.success) {
         return {
           success: true,
@@ -182,15 +154,26 @@ export const authService = {
         throw new Error('Session verification failed');
       }
     } catch (error) {
-      console.warn('Session verification failed, using local validation:', error);
-      
-      // Fall back to local session validation
       return {
-        success: true,
-        user: session.user,
-        message: 'Session valid (local)'
+        success: false,
+        message: 'Session verification failed',
+        error: error.message
       };
     }
+  },
+
+  /**
+   * Validate session data structure
+   * @param {Object} session - Session data to validate
+   * @returns {boolean} True if session is valid
+   */
+  isValidSessionStructure(session) {
+    return session &&
+           typeof session === 'object' &&
+           session.user &&
+           session.token &&
+           session.expiresAt &&
+           typeof session.expiresAt === 'number';
   },
 
   /**
@@ -200,7 +183,18 @@ export const authService = {
   getSession() {
     try {
       const sessionData = localStorage.getItem('smartbite-session');
-      return sessionData ? JSON.parse(sessionData) : null;
+      if (!sessionData) return null;
+      
+      const session = JSON.parse(sessionData);
+      
+      // Validate session structure
+      if (!this.isValidSessionStructure(session)) {
+        console.warn('Invalid session structure found, clearing session');
+        localStorage.removeItem('smartbite-session');
+        return null;
+      }
+      
+      return session;
     } catch (error) {
       console.error('Failed to parse session data:', error);
       localStorage.removeItem('smartbite-session');

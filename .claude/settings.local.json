@@ -15,7 +15,8 @@
       "Bash(curl:*)",
       "Bash(rm:*)",
       "Bash(git tag:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

@@ -48,25 +48,16 @@ export const configService = {
    * @returns {Promise<Object>} Configuration data
    */
   async getSystemConfig() {
-    console.log('ConfigService: getSystemConfig called');
-    
-    // Ensure we have authentication
     if (!this.ensureAuthenticated()) {
-      console.warn('ConfigService: Not authenticated, using default config');
       return {
-        success: true,
-        config: this.getDefaultConfig(),
-        message: 'Using default configuration (not authenticated)'
+        success: false,
+        error: 'Authentication required',
+        message: 'You must be logged in to get configuration'
       };
     }
-    
     try {
-      console.log('ConfigService: Making authenticated GET request to /config/system');
       const response = await apiClient.get('/config/system');
-      console.log('ConfigService: GET response received:', response);
-      
       if (response.success && response.config) {
-        console.log('ConfigService: API returned valid config data');
         return {
           success: true,
           config: response.config,
@@ -74,22 +65,13 @@ export const configService = {
           timestamp: response.timestamp
         };
       } else {
-        console.warn('ConfigService: API response missing config data:', response);
         throw new Error(response.error || 'Failed to get configuration');
       }
     } catch (error) {
-      console.error('ConfigService: API get error:', {
-        message: error.message,
-        stack: error.stack
-      });
-      
-      console.warn('ConfigService: API error, using default config');
-      
-      // Return default configuration if API is not available
       return {
-        success: true,
-        config: this.getDefaultConfig(),
-        message: 'Using default configuration'
+        success: false,
+        error: error.message,
+        message: 'Failed to get configuration from API'
       };
     }
   },
@@ -213,32 +195,6 @@ export const configService = {
     }
   },
 
-  /**
-   * Get cached configuration from localStorage (deprecated - kept for fallback only)
-   * @returns {Object|null} Cached configuration
-   */
-  getCachedConfig() {
-    console.warn('ConfigService: getCachedConfig is deprecated - API should be primary source');
-    try {
-      const cachedConfig = localStorage.getItem('smartbite-config');
-      return cachedConfig ? JSON.parse(cachedConfig) : null;
-    } catch (error) {
-      console.error('Failed to parse cached config:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Clear cached configuration from localStorage (deprecated - kept for cleanup only)
-   */
-  clearCachedConfig() {
-    console.warn('ConfigService: clearCachedConfig is deprecated - API is primary source');
-    try {
-      localStorage.removeItem('smartbite-config');
-    } catch (error) {
-      console.error('Failed to clear cached config:', error);
-    }
-  },
 
   /**
    * Get system configuration (alias for getSystemConfig)
@@ -257,36 +213,6 @@ export const configService = {
     return this.getSystemConfig();
   },
 
-  /**
-   * Get default system configuration matching API format
-   * @returns {Object} Default configuration
-   */
-  getDefaultConfig() {
-    return {
-      registers: {
-        count: 2,
-        names: ['Main Register', 'Secondary Register'],
-        reserveAmount: 400.00,
-        enabled: [true, true]
-      },
-      business: {
-        name: 'SmartBite Restaurant',
-        timezone: 'America/New_York',
-        currency: 'USD',
-        taxRate: 8.5
-      },
-      reconciliation: {
-        dailyDeadline: '23:59',
-        varianceTolerance: 5.00,
-        requireManagerApproval: true
-      },
-      posTerminals: {
-        count: 4,
-        names: ['POS Terminal 1', 'POS Terminal 2', 'POS Terminal 3', 'POS Terminal 4'],
-        enabled: [true, true, true, true]
-      }
-    };
-  },
 
   /**
    * Validate configuration object
@@ -357,7 +283,7 @@ export const configService = {
     const result = await this.getConfig();
     return {
       success: result.success,
-      registers: result.config?.registers || this.getDefaultConfig().registers,
+      registers: result.config?.registers,
       message: result.message
     };
   },
@@ -370,7 +296,7 @@ export const configService = {
     const result = await this.getConfig();
     return {
       success: result.success,
-      posTerminals: result.config?.posTerminals || this.getDefaultConfig().posTerminals,
+      posTerminals: result.config?.posTerminals,
       message: result.message
     };
   }

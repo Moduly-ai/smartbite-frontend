@@ -12,10 +12,31 @@ class ApiClient {
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+    this.retryAttempts = 3;
+    this.retryDelay = 1000;
   }
 
   /**
-   * Makes an HTTP request with common configuration
+   * Sleep utility for retry delays
+   * @param {number} ms - Milliseconds to sleep
+   */
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Check if error is retryable
+   * @param {Error} error - Error to check
+   * @returns {boolean} Whether error is retryable
+   */
+  isRetryableError(error) {
+    if (error.name === 'AbortError') return false;
+    if (error.message.includes('401') || error.message.includes('403')) return false;
+    return true;
+  }
+
+  /**
+   * Makes an HTTP request with common configuration and retry logic
    * @param {string} endpoint - API endpoint path
    * @param {Object} options - Fetch options
    * @returns {Promise<Object>} Response data
@@ -37,34 +58,61 @@ class ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
     config.signal = controller.signal;
 
-    try {
-      const response = await fetch(url, config);
-      clearTimeout(timeoutId);
+    let lastError;
+    
+    for (let attempt = 0; attempt <= this.retryAttempts; attempt++) {
+      try {
+        const response = await fetch(url, config);
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
+        if (!response.ok) {
+          const errorText = await response.text();
+          const error = new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+          
+          // Don't retry for client errors (4xx)
+          if (response.status >= 400 && response.status < 500) {
+            console.error('API Client Error:', errorText);
+            throw error;
+          }
+          
+          // Retry for server errors (5xx) if attempts remain
+          if (attempt < this.retryAttempts) {
+            console.warn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, errorText);
+            await this.sleep(this.retryDelay * (attempt + 1));
+            continue;
+          }
+          
+          throw error;
+        }
 
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const jsonResponse = await response.json();
+          return jsonResponse;
+        }
+        
+        const textResponse = await response.text();
+        return textResponse;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        lastError = error;
+        
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout');
+        }
+        
+        // Don't retry if error is not retryable or no attempts left
+        if (!this.isRetryableError(error) || attempt >= this.retryAttempts) {
+          console.error('API request failed:', error);
+          throw error;
+        }
+        
+        console.warn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, error.message);
+        await this.sleep(this.retryDelay * (attempt + 1));
       }
-      
-      const textResponse = await response.text();
-      return textResponse;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
-      
-      console.error('API request failed:', error);
-      throw error;
     }
+    
+    throw lastError;
   }
 
   /**

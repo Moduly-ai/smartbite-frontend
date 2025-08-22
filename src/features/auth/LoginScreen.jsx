@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
+import OwnerSignupScreen from './OwnerSignupScreen.jsx';
 
 const LoginScreen = ({ onLogin }) => {
+  const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
   const [loginType, setLoginType] = useState('employee');
   const [formData, setFormData] = useState({
     employeeId: '',
@@ -36,6 +38,29 @@ const LoginScreen = ({ onLogin }) => {
       setIsLoading(false);
     }
   };
+
+  const handleSignupSuccess = (result) => {
+    onLogin(result.user);
+  };
+
+  const handleBackToLogin = () => {
+    setCurrentView('login');
+    setError('');
+  };
+
+  const handleShowSignup = () => {
+    setCurrentView('signup');
+    setError('');
+  };
+
+  if (currentView === 'signup') {
+    return (
+      <OwnerSignupScreen 
+        onSignupSuccess={handleSignupSuccess}
+        onBackToLogin={handleBackToLogin}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
@@ -153,6 +178,20 @@ const LoginScreen = ({ onLogin }) => {
                 <p className="text-gray-600">owner-001 / owner123</p>
               </div>
             </div>
+          </div>
+
+          {/* Owner Signup Link */}
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-600 mb-3">
+              Don't have an account?
+            </p>
+            <button
+              type="button"
+              onClick={handleShowSignup}
+              className="w-full py-2 px-4 rounded-lg font-medium text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
+            >
+              Create Owner Account
+            </button>
           </div>
         </div>
       </div>
