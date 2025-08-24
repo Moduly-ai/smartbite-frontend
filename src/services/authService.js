@@ -16,7 +16,8 @@ export const authService = {
    */
   async ownerSignup(signupData) {
     try {
-      const response = await apiClient.postWithCSRF('/ownersignup', signupData);
+      // Use regular POST since signup is a public endpoint (no CSRF required)
+      const response = await apiClient.post('/finalOwnerSignup', signupData);
       
       if (response.success) {
         // Cookie is set automatically by browser - no JavaScript handling needed
