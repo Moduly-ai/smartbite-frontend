@@ -174,7 +174,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"employee-001\",\n  \"pin\": \"employee789\"\n}"
+              "raw": "{\n  \"employeeId\": \"employee-001\",\n  \"pin\": \"1789\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -220,7 +220,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"manager-001\",\n  \"pin\": \"manager456\"\n}"
+              "raw": "{\n  \"employeeId\": \"manager-001\",\n  \"pin\": \"1456\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -266,7 +266,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"owner-001\",\n  \"pin\": \"owner123\"\n}"
+              "raw": "{\n  \"employeeId\": \"owner-001\",\n  \"pin\": \"1123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",

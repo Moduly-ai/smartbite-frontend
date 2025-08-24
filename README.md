@@ -47,9 +47,9 @@ A React-based cash reconciliation system for restaurant management, providing co
 ## Demo Credentials
 
 ### Live API Testing
-- **Employee**: `employee-001` / PIN: `employee789`
-- **Manager**: `manager-001` / PIN: `manager456`
-- **Owner**: `owner-001` / PIN: `owner123`
+- **Employee**: `employee-001` / PIN: `1789`
+- **Manager**: `manager-001` / PIN: `1456`
+- **Owner**: `owner-001` / PIN: `1123`
 
 ## Available Scripts
 

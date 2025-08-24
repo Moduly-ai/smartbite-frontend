@@ -86,7 +86,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('employee');
-                setFormData({ employeeId: 'employee-001', pin: 'employee789' });
+                setFormData({ employeeId: 'employee-001', pin: '1789' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -101,7 +101,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('owner');
-                setFormData({ employeeId: 'owner-001', pin: 'owner123' });
+                setFormData({ employeeId: 'owner-001', pin: '1123' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -167,15 +167,15 @@ const LoginScreen = ({ onLogin }) => {
             <div className="grid grid-cols-1 gap-2 text-xs">
               <div className="bg-gray-50 p-2 rounded">
                 <p className="font-medium text-gray-700">Employee</p>
-                <p className="text-gray-600">employee-001 / employee789</p>
+                <p className="text-gray-600">employee-001 / 1789</p>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <p className="font-medium text-gray-700">Manager</p>
-                <p className="text-gray-600">manager-001 / manager456</p>
+                <p className="text-gray-600">manager-001 / 1456</p>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <p className="font-medium text-gray-700">Owner</p>
-                <p className="text-gray-600">owner-001 / owner123</p>
+                <p className="text-gray-600">owner-001 / 1123</p>
               </div>
             </div>
           </div>

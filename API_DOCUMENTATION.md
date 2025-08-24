@@ -21,11 +21,13 @@ SmartBite uses **PIN-based authentication** with **JWT tokens** for session mana
 ### POST /auth/login
 Authenticate user with Employee ID and PIN.
 
+**Important:** This endpoint supports CORS and can be called from web applications without cross-origin issues. Both `/auth` and `/auth/login` routes are supported.
+
 **Request:**
 ```json
 {
   "employeeId": "employee-001",
-  "pin": "employee789"
+  "pin": "1789"
 }
 ```
 
@@ -33,24 +35,14 @@ Authenticate user with Employee ID and PIN.
 ```json
 {
   "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "employeeId": "employee-001",
+    "name": "John Smith",
     "userType": "employee",
-    "name": "John Smith", 
-    "email": "john@smartbite.com",
-    "tenantId": "tenant-001",
-    "permissions": ["reconciliation"],
-    "hasReconciliationAccess": false,
-    "profile": {
-      "firstName": "John",
-      "lastName": "Smith", 
-      "phone": "555-0101"
-    }
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "message": "Login successful",
-  "expiresIn": 86400,
-  "timestamp": "2025-08-23T23:33:52.858Z"
+    "tenantId": "tenant-001"
+  }
 }
 ```
 
@@ -74,8 +66,7 @@ switch (response.user.userType) {
 ```json
 {
   "success": false,
-  "error": "Invalid employee ID or PIN",
-  "timestamp": "2025-08-23T23:33:52.858Z"
+  "error": "Invalid credentials"
 }
 ```
 
@@ -86,16 +77,12 @@ Check authentication service health and get demo credentials.
 ```json
 {
   "success": true,
-  "service": "SmartBite Authentication API v3.0",
-  "message": "Enhanced authentication with Cosmos DB integration",
-  "database": {
-    "status": "healthy",
-    "integration": "Azure Cosmos DB"
-  },
+  "service": "SmartBite Auth API",
+  "message": "CORS-enabled authentication service",
   "demo_credentials": {
-    "employee": { "employeeId": "employee-001", "pin": "employee789" },
-    "manager": { "employeeId": "manager-001", "pin": "manager456" },
-    "owner": { "employeeId": "owner-001", "pin": "owner123" }
+    "owner": { "employeeId": "owner-001", "pin": "1123" },
+    "manager": { "employeeId": "manager-001", "pin": "1456" },
+    "employee": { "employeeId": "employee-001", "pin": "1789" }
   }
 }
 ```
@@ -175,21 +162,105 @@ Authorization: Bearer <jwt_token>
   "success": true,
   "message": "Employee created successfully",
   "employee": {
-    "id": "emp-new",
-    "employeeId": "EMP-12345",
-    "pin": "1234",
+    "id": "employee-257278pkb",
+    "employeeId": "employee-257278pkb",
+    "tenantId": "tenant-001",
+    "userType": "employee",
     "name": "New Employee",
     "email": "new@smartbite.com",
-    "userType": "employee"
-  }
+    "pin": "4369",
+    "isActive": true,
+    "permissions": ["reconciliation"],
+    "profile": {
+      "firstName": "New",
+      "lastName": "Employee",
+      "phone": "555-0123"
+    },
+    "createdAt": "2025-08-24T00:10:57.278Z",
+    "updatedAt": "2025-08-24T00:10:57.278Z"
+  },
+  "credentials": {
+    "employeeId": "employee-257278pkb",
+    "pin": "4369"
+  },
+  "timestamp": "2025-08-24T00:10:57.289Z"
 }
 ```
 
 ### PUT /employees/{employeeId}
 Update an existing employee (Manager/Owner only).
 
+**Request:**
+```json
+{
+  "name": "Updated Employee Name",
+  "userType": "manager",
+  "email": "updated@smartbite.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Employee updated successfully",
+  "employee": {
+    "id": "employee-257278pkb",
+    "employeeId": "employee-257278pkb",
+    "tenantId": "tenant-001",
+    "userType": "manager",
+    "name": "Updated Employee Name",
+    "email": "updated@smartbite.com",
+    "permissions": ["reconciliation", "employee-mgmt"],
+    "updatedAt": "2025-08-24T00:11:09.952Z"
+  },
+  "timestamp": "2025-08-24T00:11:09.962Z"
+}
+```
+
 ### DELETE /employees/{employeeId}  
-Deactivate an employee (Manager/Owner only).
+Deactivate an employee (Manager/Owner only). This performs a soft delete by setting `isActive: false`.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Employee deactivated successfully",
+  "employee": {
+    "id": "employee-257278pkb",
+    "employeeId": "employee-257278pkb",
+    "isActive": false,
+    "deactivatedAt": "2025-08-24T00:11:27.696Z",
+    "updatedAt": "2025-08-24T00:11:27.696Z"
+  },
+  "timestamp": "2025-08-24T00:11:27.705Z"
+}
+```
+
+### GET /employees/{employeeId}
+Get a specific employee by ID.
+
+**Response:**
+```json
+{
+  "success": true,
+  "employee": {
+    "id": "employee-001",
+    "employeeId": "employee-001", 
+    "tenantId": "tenant-001",
+    "userType": "employee",
+    "name": "John Smith",
+    "email": "john@smartbite.com",
+    "isActive": true,
+    "permissions": ["reconciliation"],
+    "profile": {
+      "firstName": "John",
+      "lastName": "Smith",
+      "phone": "555-0101"
+    }
+  }
+}
+```
 
 ---
 
@@ -241,12 +312,79 @@ Authorization: Bearer <jwt_token>
 ### POST /reconciliations
 Submit a new reconciliation.
 
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
 **Request:**
 ```json
 {
-  "expectedCash": 500.00,
-  "actualCash": 495.00,
-  "notes": "Short $5 - customer refund"
+  "date": "2025-08-24",
+  "registers": [
+    {
+      "id": 1,
+      "name": "Main Register",
+      "total": 500.00,
+      "reserve": 400.00,
+      "banking": 100.00
+    }
+  ],
+  "posTerminals": [
+    {
+      "id": 1,
+      "name": "Terminal 1", 
+      "total": 1200.50
+    }
+  ],
+  "summary": {
+    "totalSales": 1700.50,
+    "totalEftpos": 1200.50,
+    "payouts": 0,
+    "expectedBanking": 100.00,
+    "actualBanking": 100.00,
+    "variance": 0
+  },
+  "comments": "Perfect day - no variance"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Reconciliation submitted successfully",
+  "reconciliation": {
+    "id": "2025-08-24-employee-001-1755995304489",
+    "date": "2025-08-24",
+    "employeeName": "John Smith",
+    "tenantId": "tenant-001",
+    "status": "pending_approval",
+    "submittedAt": "2025-08-24T00:28:24.490Z",
+    "registers": [
+      {
+        "id": 1,
+        "name": "Main Register",
+        "total": 500,
+        "reserve": 400,
+        "banking": 100
+      }
+    ],
+    "posTerminals": [
+      {
+        "id": 1,
+        "name": "Terminal 1",
+        "total": 1200.5
+      }
+    ],
+    "summary": {
+      "totalSales": 1700.5,
+      "totalEftpos": 1200.5,
+      "variance": 0
+    }
+  },
+  "requiresApproval": false,
+  "timestamp": "2025-08-24T00:28:24.490Z"
 }
 ```
 
@@ -459,13 +597,21 @@ const canConfigureSystem = user.permissions.includes('system-config');
 
 ## 🔧 Demo Credentials for Testing
 
+**All demo users are stored in Azure Cosmos DB and verified working:**
+
 ```javascript
 const demoCredentials = {
-  employee: { employeeId: 'employee-001', pin: 'employee789' },
-  manager: { employeeId: 'manager-001', pin: 'manager456' }, 
-  owner: { employeeId: 'owner-001', pin: 'owner123' }
+  employee: { employeeId: 'employee-001', pin: '1789' },
+  manager: { employeeId: 'manager-001', pin: '1456' }, 
+  owner: { employeeId: 'owner-001', pin: '1123' }
 };
 ```
+
+**Demo Data Available:**
+- ✅ **3 Active Employees** in database (employee-001, manager-001, owner-001)
+- ✅ **Sample Reconciliation Data** with complete cash/POS records  
+- ✅ **System Configuration** with registers, POS terminals, and business settings
+- ✅ **Multi-tenant Support** with tenant-001 as demo tenant
 
 ---
 
