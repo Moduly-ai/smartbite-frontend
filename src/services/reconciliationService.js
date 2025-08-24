@@ -135,6 +135,95 @@ export const reconciliationService = {
         message: 'Failed to update reconciliation status'
       };
     }
+  },
+
+  /**
+   * Approve a reconciliation (Manager/Owner only)
+   * @param {string} reconciliationId - Reconciliation ID
+   * @returns {Promise<Object>} Approval result
+   */
+  async approveReconciliation(reconciliationId) {
+    try {
+      const response = await apiClient.put(`/reconciliations/${reconciliationId}/approve`);
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: response,
+          message: 'Reconciliation approved successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Approval failed');
+      }
+    } catch (error) {
+      console.error('Failed to approve reconciliation:', error);
+      
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to approve reconciliation'
+      };
+    }
+  },
+
+  /**
+   * Reject a reconciliation (Manager/Owner only)
+   * @param {string} reconciliationId - Reconciliation ID
+   * @param {string} rejectionReason - Reason for rejection
+   * @returns {Promise<Object>} Rejection result
+   */
+  async rejectReconciliation(reconciliationId, rejectionReason) {
+    try {
+      const response = await apiClient.put(`/reconciliations/${reconciliationId}/reject`, {
+        rejectionReason
+      });
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: response,
+          message: 'Reconciliation rejected successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Rejection failed');
+      }
+    } catch (error) {
+      console.error('Failed to reject reconciliation:', error);
+      
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to reject reconciliation'
+      };
+    }
+  },
+
+  /**
+   * Get pending reconciliations awaiting approval (Manager/Owner only)
+   * @returns {Promise<Object>} Pending reconciliations
+   */
+  async getPendingReconciliations() {
+    try {
+      const response = await apiClient.get('/reconciliations/pending');
+      
+      if (response.success && response.reconciliations) {
+        return {
+          success: true,
+          data: response.reconciliations,
+          message: 'Pending reconciliations retrieved successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Failed to fetch pending reconciliations');
+      }
+    } catch (error) {
+      console.error('Failed to fetch pending reconciliations:', error);
+      
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to load pending reconciliations'
+      };
+    }
   }
 };
 

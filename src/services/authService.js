@@ -13,7 +13,7 @@ export const authService = {
    */
   async ownerSignup(signupData) {
     try {
-      const response = await apiClient.post('/owner-signup', signupData);
+      const response = await apiClient.post('/finalOwnerSignup', signupData);
       
       if (response.success && response.data) {
         const { credentials, tenant } = response.data;
@@ -228,6 +228,60 @@ export const authService = {
   hasPermission(permission) {
     const user = this.getCurrentUser();
     return user?.permissions?.includes(permission) || false;
+  },
+
+  /**
+   * Get authentication service status and demo credentials
+   * @returns {Promise<Object>} Auth service status
+   */
+  async getAuthStatus() {
+    try {
+      const response = await apiClient.get('/auth/status');
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: response,
+          message: 'Auth status retrieved successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Failed to get auth status');
+      }
+    } catch (error) {
+      console.error('Failed to get auth status:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to get authentication status'
+      };
+    }
+  },
+
+  /**
+   * Seed demo users for testing (Development only)
+   * @returns {Promise<Object>} Seeding result
+   */
+  async seedDemoUsers() {
+    try {
+      const response = await apiClient.post('/seedDemoUsers');
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: response,
+          message: 'Demo users seeded successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Failed to seed demo users');
+      }
+    } catch (error) {
+      console.error('Failed to seed demo users:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to seed demo users'
+      };
+    }
   }
 };
 

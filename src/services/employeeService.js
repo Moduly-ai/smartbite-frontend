@@ -77,6 +77,15 @@ export const employeeService = {
         email: employeeData.email || `${employeeData.name.toLowerCase().replace(/\s+/g, '.')}@smartbite.com`
       };
 
+      // Add profile fields if available
+      if (employeeData.firstName || employeeData.lastName || employeeData.phone) {
+        requestData.profile = {
+          firstName: employeeData.firstName || employeeData.name.split(' ')[0] || '',
+          lastName: employeeData.lastName || employeeData.name.split(' ').slice(1).join(' ') || '',
+          phone: employeeData.phone || ''
+        };
+      }
+
       // Add PIN if provided (API will auto-generate if not provided)
       if (employeeData.pin && employeeData.pin.trim()) {
         requestData.pin = employeeData.pin;
@@ -122,6 +131,15 @@ export const employeeService = {
         userType: employeeData.hasReconciliationAccess ? 'manager' : 'employee',
         email: employeeData.email || `${employeeData.name.toLowerCase().replace(/\s+/g, '.')}@smartbite.com`
       };
+
+      // Add profile fields if available
+      if (employeeData.firstName || employeeData.lastName || employeeData.phone) {
+        requestData.profile = {
+          firstName: employeeData.firstName || employeeData.name.split(' ')[0] || '',
+          lastName: employeeData.lastName || employeeData.name.split(' ').slice(1).join(' ') || '',
+          phone: employeeData.phone || ''
+        };
+      }
 
       // Add PIN if provided (will update PIN if not empty)
       if (employeeData.pin && employeeData.pin.trim()) {

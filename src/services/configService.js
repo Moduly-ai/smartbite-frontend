@@ -56,7 +56,7 @@ export const configService = {
       };
     }
     try {
-      const response = await apiClient.get('/config/system');
+      const response = await apiClient.get('/config');
       if (response.success && response.config) {
         return {
           success: true,
@@ -130,10 +130,10 @@ export const configService = {
     const cleanConfig = this.cleanConfigForSubmission(config);
     
     try {
-      console.log('ConfigService: Making authenticated PUT request to /config/system');
+      console.log('ConfigService: Making authenticated PUT request to /config');
       console.log('ConfigService: Request body:', JSON.stringify(cleanConfig, null, 2));
       
-      const response = await apiClient.put('/config/system', cleanConfig);
+      const response = await apiClient.put('/config', cleanConfig);
       console.log('ConfigService: PUT response received:', response);
       
       if (response.success && response.config) {
