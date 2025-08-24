@@ -7,6 +7,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     lastName: '',
     email: '',
     phone: '',
+    pin: '',
     businessName: '',
     businessType: 'restaurant',
     address: {
@@ -40,13 +41,21 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   };
 
   const validateStep1 = () => {
-    const { firstName, lastName, email, phone } = formData;
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim()) {
+    const { firstName, lastName, email, phone, pin } = formData;
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !pin.trim()) {
       setError('Please fill in all personal information fields');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
+      return false;
+    }
+    if (pin.length < 4 || pin.length > 6) {
+      setError('PIN must be 4-6 digits');
+      return false;
+    }
+    if (!/^\d+$/.test(pin)) {
+      setError('PIN must contain only numbers');
       return false;
     }
     return true;
@@ -208,6 +217,21 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="555-0123"
                   />
+                </div>
+
+                <div>
+                  <label className="form-label">PIN</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-input"
+                    value={formData.pin}
+                    onChange={(e) => handleInputChange('pin', e.target.value)}
+                    placeholder="Create a 4-6 digit PIN"
+                    maxLength="6"
+                    minLength="4"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">This PIN will be used to login to your account</p>
                 </div>
               </>
             )}
