@@ -21,10 +21,13 @@ export const authService = {
       
       if (response.success) {
         // Cookie is set automatically by browser - no JavaScript handling needed
+        // Map the owner data to user field for consistent login flow
+        const user = response.user || response.data?.owner || null;
+        
         return {
           success: true,
           data: response.data,
-          user: response.user,
+          user: user,
           message: response.message || 'Account created successfully'
         };
       } else {
