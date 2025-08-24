@@ -20,7 +20,10 @@ function App() {
           setUserSession(sessionStatus.user);
         }
       } catch (error) {
-        console.error('App: Failed to check session status:', error);
+        // 401 errors are expected when not logged in - don't log as errors
+        if (!error.message.includes('401')) {
+          console.error('App: Failed to check session status:', error);
+        }
         // If session check fails, user will see login screen
       } finally {
         setIsLoadingSession(false);

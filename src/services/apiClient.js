@@ -80,7 +80,10 @@ class ApiClient {
           
           // Don't retry for client errors (4xx)
           if (response.status >= 400 && response.status < 500) {
-            console.error('API Client Error:', errorText);
+            // Don't log 401 errors for session status - they're expected when not logged in
+            if (!(response.status === 401 && endpoint === '/session/status')) {
+              console.error('API Client Error:', errorText);
+            }
             throw error;
           }
           
@@ -269,7 +272,10 @@ class ApiClient {
     try {
       return await this.get('/session/status');
     } catch (error) {
-      console.error('Session status check failed:', error);
+      // 401 errors are expected when not logged in - don't log as errors
+      if (!error.message.includes('401')) {
+        console.error('Session status check failed:', error);
+      }
       return { success: false, authenticated: false };
     }
   }

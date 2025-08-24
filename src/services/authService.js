@@ -128,7 +128,10 @@ export const authService = {
         };
       }
     } catch (error) {
-      console.error('Session status check failed:', error);
+      // 401 errors are expected when not logged in - don't log as errors
+      if (!error.message.includes('401')) {
+        console.error('Session status check failed:', error);
+      }
       return {
         success: false,
         authenticated: false,
