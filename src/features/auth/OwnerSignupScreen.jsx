@@ -62,7 +62,8 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = (e) => {
+    e.preventDefault();
     if (step === 1 && validateStep1()) {
       setStep(2);
     }
