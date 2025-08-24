@@ -161,24 +161,6 @@ const LoginScreen = ({ onLogin }) => {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 mb-3">Demo Credentials:</p>
-            <div className="grid grid-cols-1 gap-2 text-xs">
-              <div className="bg-gray-50 p-2 rounded">
-                <p className="font-medium text-gray-700">Employee</p>
-                <p className="text-gray-600">employee-001 / 1789</p>
-              </div>
-              <div className="bg-gray-50 p-2 rounded">
-                <p className="font-medium text-gray-700">Manager</p>
-                <p className="text-gray-600">manager-001 / 1456</p>
-              </div>
-              <div className="bg-gray-50 p-2 rounded">
-                <p className="font-medium text-gray-700">Owner</p>
-                <p className="text-gray-600">owner-001 / 1123</p>
-              </div>
-            </div>
-          </div>
 
           {/* Owner Signup Link */}
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
