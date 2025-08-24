@@ -37,19 +37,9 @@ function App() {
   }, []);
 
   const handleLogin = async (loginData) => {
-    // After successful login, get fresh session status to ensure we have latest user data
-    try {
-      const sessionStatus = await authService.getSessionStatus();
-      if (sessionStatus.authenticated && sessionStatus.user) {
-        setUserSession(sessionStatus.user);
-      } else {
-        // Fallback to login data if session status fails
-        setUserSession(loginData);
-      }
-    } catch (error) {
-      console.error('Failed to get session after login:', error);
-      setUserSession(loginData); // Fallback to login data
-    }
+    // For cookie-based auth, just use the login data directly
+    // The session status check in useEffect will handle authentication state
+    setUserSession(loginData);
   };
 
   const handleLogout = async () => {
