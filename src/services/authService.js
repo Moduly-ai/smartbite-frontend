@@ -56,7 +56,8 @@ export const authService = {
    */
   async login(email, pin) {
     try {
-      const response = await apiClient.postWithCSRF('/auth', {
+      // Login is a public endpoint - no CSRF token required
+      const response = await apiClient.post('/auth', {
         email,
         pin
       });
