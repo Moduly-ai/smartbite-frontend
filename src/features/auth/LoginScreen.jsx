@@ -6,7 +6,7 @@ const LoginScreen = ({ onLogin }) => {
   const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
   const [loginType, setLoginType] = useState('employee');
   const [formData, setFormData] = useState({
-    employeeId: '',
+    email: '',
     pin: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +24,7 @@ const LoginScreen = ({ onLogin }) => {
     setError('');
 
     try {
-      const result = await authService.login(formData.employeeId, formData.pin);
+      const result = await authService.login(formData.email, formData.pin);
       
       if (result.success) {
         onLogin(result.user);
@@ -86,7 +86,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('employee');
-                setFormData({ employeeId: 'employee-001', pin: '1789' });
+                setFormData({ email: '', pin: '' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -101,7 +101,7 @@ const LoginScreen = ({ onLogin }) => {
               type="button"
               onClick={() => {
                 setLoginType('owner');
-                setFormData({ employeeId: 'owner-001', pin: '1123' });
+                setFormData({ email: '', pin: '' });
                 setError('');
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -117,15 +117,15 @@ const LoginScreen = ({ onLogin }) => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="form-label">
-                Employee ID
+                Email Address
               </label>
               <input
-                type="text"
+                type="email"
                 required
                 className="form-input"
-                value={formData.employeeId}
-                onChange={(e) => handleInputChange('employeeId', e.target.value)}
-                placeholder="e.g., employee-001, manager-001, owner-001"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="Enter your email address"
               />
             </div>
 

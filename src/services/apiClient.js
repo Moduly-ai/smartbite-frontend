@@ -1,6 +1,8 @@
 /**
  * Centralized API client for SmartBite application
- * Handles all HTTP requests with consistent error handling and configuration
+ * Uses secure cookie-based authentication (httpOnly, secure, SameSite=Strict)
+ * NO localStorage/sessionStorage - browser handles all session management
+ * CSRF protection for all state-changing operations
  */
 
 import { env } from '../config/env.js';
@@ -14,6 +16,7 @@ class ApiClient {
     };
     this.retryAttempts = 3;
     this.retryDelay = 1000;
+    this.csrfToken = null;
   }
 
   /**
@@ -46,11 +49,17 @@ class ApiClient {
     
     const config = {
       ...options,
+      credentials: 'include', // MANDATORY for cookie-based auth
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
       },
     };
+
+    // Add CSRF token for state-changing operations
+    if (['POST', 'PUT', 'DELETE'].includes(options.method) && this.csrfToken) {
+      config.headers['X-CSRF-Token'] = this.csrfToken;
+    }
 
 
     // Add timeout
@@ -172,14 +181,109 @@ class ApiClient {
   }
 
   /**
-   * Set authentication header
-   * @param {string} token - Authentication token
+   * CSRF-protected POST request (automatically gets CSRF token)
+   * @param {string} endpoint - API endpoint
+   * @param {Object} data - Request body data
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Response data
    */
-  setAuthToken(token) {
-    if (token) {
-      this.defaultHeaders['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete this.defaultHeaders['Authorization'];
+  async postWithCSRF(endpoint, data = null, options = {}) {
+    try {
+      await this.getCSRFToken();
+      const response = await this.post(endpoint, data, options);
+      this.clearCSRFToken(); // Clear token after use (one-time only)
+      return response;
+    } catch (error) {
+      this.clearCSRFToken();
+      throw error;
+    }
+  }
+
+  /**
+   * CSRF-protected PUT request (automatically gets CSRF token)
+   * @param {string} endpoint - API endpoint
+   * @param {Object} data - Request body data
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Response data
+   */
+  async putWithCSRF(endpoint, data = null, options = {}) {
+    try {
+      await this.getCSRFToken();
+      const response = await this.put(endpoint, data, options);
+      this.clearCSRFToken(); // Clear token after use (one-time only)
+      return response;
+    } catch (error) {
+      this.clearCSRFToken();
+      throw error;
+    }
+  }
+
+  /**
+   * CSRF-protected DELETE request (automatically gets CSRF token)
+   * @param {string} endpoint - API endpoint
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Response data
+   */
+  async deleteWithCSRF(endpoint, options = {}) {
+    try {
+      await this.getCSRFToken();
+      const response = await this.delete(endpoint, options);
+      this.clearCSRFToken(); // Clear token after use (one-time only)
+      return response;
+    } catch (error) {
+      this.clearCSRFToken();
+      throw error;
+    }
+  }
+
+  /**
+   * Get CSRF token for form submissions
+   * @returns {Promise<string>} CSRF token
+   */
+  async getCSRFToken() {
+    try {
+      const response = await this.get('/csrf/token');
+      if (response.success && response.token) {
+        this.csrfToken = response.token;
+        return response.token;
+      }
+      throw new Error('Failed to get CSRF token');
+    } catch (error) {
+      console.error('CSRF token request failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear CSRF token (called after use since tokens are one-time only)
+   */
+  clearCSRFToken() {
+    this.csrfToken = null;
+  }
+
+  /**
+   * Check if user is authenticated
+   * @returns {Promise<Object>} Session status
+   */
+  async getSessionStatus() {
+    try {
+      return await this.get('/session/status');
+    } catch (error) {
+      console.error('Session status check failed:', error);
+      return { success: false, authenticated: false };
+    }
+  }
+
+  /**
+   * Refresh session (extends cookie expiration)
+   * @returns {Promise<Object>} Refresh result
+   */
+  async refreshSession() {
+    try {
+      return await this.post('/session/refresh');
+    } catch (error) {
+      console.error('Session refresh failed:', error);
+      throw error;
     }
   }
 

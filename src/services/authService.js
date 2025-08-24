@@ -1,6 +1,8 @@
 /**
- * Authentication service
- * Handles all authentication-related API calls
+ * Authentication service for SmartBite
+ * Cookie-based authentication system (httpOnly, secure, SameSite=Strict)
+ * NO localStorage/sessionStorage - browser manages all session state
+ * CSRF protection for all form submissions
  */
 
 import apiClient from './apiClient.js';
@@ -8,46 +10,27 @@ import apiClient from './apiClient.js';
 export const authService = {
   /**
    * Owner signup - One-step tenant creation
-   * @param {Object} signupData - Owner signup data
+   * Uses CSRF protection and sets secure authentication cookie
+   * @param {Object} signupData - Owner signup data (email, PIN, businessName, etc.)
    * @returns {Promise<Object>} Signup result
    */
   async ownerSignup(signupData) {
     try {
-      const response = await apiClient.post('/finalOwnerSignup', signupData);
+      const response = await apiClient.postWithCSRF('/ownersignup', signupData);
       
-      if (response.success && response.data) {
-        const { credentials, tenant } = response.data;
-        
-        // Auto-login the new owner with provided credentials
-        if (credentials?.token) {
-          apiClient.setAuthToken(credentials.token);
-          const sessionData = {
-            user: {
-              employeeId: credentials.employeeId,
-              userType: 'owner',
-              name: `${signupData.firstName} ${signupData.lastName}`,
-              email: signupData.email,
-              tenantId: tenant.id
-            },
-            token: credentials.token,
-            expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
-            loginTime: new Date().toISOString()
-          };
-          localStorage.setItem('smartbite-session', JSON.stringify(sessionData));
-        }
-        
+      if (response.success) {
+        // Cookie is set automatically by browser - no JavaScript handling needed
         return {
           success: true,
           data: response.data,
-          user: sessionData.user,
-          credentials: credentials,
-          message: 'Account created successfully'
+          user: response.user,
+          message: response.message || 'Account created successfully'
         };
       } else {
         return {
           success: false,
           error: response.error || 'Signup failed',
-          message: 'Account creation failed'
+          message: response.message || 'Account creation failed'
         };
       }
     } catch (error) {
@@ -61,37 +44,31 @@ export const authService = {
   },
 
   /**
-   * Authenticate user with PIN
-   * @param {string} employeeId - Employee ID (e.g., 'employee-001', 'manager-001', 'owner-001')
+   * Authenticate user with email and PIN
+   * Sets secure httpOnly cookie - no JavaScript token handling
+   * @param {string} email - User email
    * @param {string} pin - User PIN
    * @returns {Promise<Object>} Authentication result
    */
-  async login(employeeId, pin) {
+  async login(email, pin) {
     try {
-      const response = await apiClient.post('/auth/login', {
-        employeeId,
+      const response = await apiClient.postWithCSRF('/auth', {
+        email,
         pin
       });
-      if (response.success && response.token) {
-        apiClient.setAuthToken(response.token);
-        const sessionData = {
-          user: response.user,
-          token: response.token,
-          expiresAt: Date.now() + (response.expiresIn * 1000 || 8 * 60 * 60 * 1000),
-          loginTime: new Date().toISOString()
-        };
-        localStorage.setItem('smartbite-session', JSON.stringify(sessionData));
+      
+      if (response.success) {
+        // Cookie is set automatically by browser - no JavaScript handling needed
         return {
           success: true,
           user: response.user,
-          token: response.token,
-          message: 'Login successful'
+          message: response.message || 'Login successful'
         };
       } else {
         return {
           success: false,
           error: response.error || 'Login failed',
-          message: 'Invalid credentials'
+          message: response.message || 'Invalid credentials'
         };
       }
     } catch (error) {
@@ -105,183 +82,159 @@ export const authService = {
   },
 
   /**
-   * Logout user
+   * Logout user - clears secure authentication cookie
    * @returns {Promise<Object>} Logout result
    */
   async logout() {
     try {
-      // Call logout API if token exists
-      const session = this.getSession();
-      if (session?.token) {
-        await apiClient.post('/auth/logout');
-      }
+      await apiClient.delete('/session/logout');
+      // Cookie is cleared automatically by server
+      return {
+        success: true,
+        message: 'Logged out successfully'
+      };
     } catch (error) {
       console.warn('Logout API call failed:', error);
-    } finally {
-      // Always clear local session
-      localStorage.removeItem('smartbite-session');
-      apiClient.setAuthToken(null);
-    }
-
-    return {
-      success: true,
-      message: 'Logged out successfully'
-    };
-  },
-
-  /**
-   * Verify current session
-   * @returns {Promise<Object>} Verification result
-   */
-  async verifySession() {
-    const session = this.getSession();
-    if (!session) {
-      return { success: false, message: 'No session found' };
-    }
-    if (Date.now() > session.expiresAt) {
-      await this.logout();
-      return { success: false, message: 'Session expired' };
-    }
-    try {
-      const response = await apiClient.get('/auth/verify');
-      if (response.success) {
-        return {
-          success: true,
-          user: session.user,
-          message: 'Session valid'
-        };
-      } else {
-        throw new Error('Session verification failed');
-      }
-    } catch (error) {
+      // Even if API fails, consider logout successful for UX
       return {
-        success: false,
-        message: 'Session verification failed',
-        error: error.message
+        success: true,
+        message: 'Logged out successfully'
       };
     }
   },
 
   /**
-   * Validate session data structure
-   * @param {Object} session - Session data to validate
-   * @returns {boolean} True if session is valid
+   * Check current session status
+   * Replaces localStorage session checking - cookie-based
+   * @returns {Promise<Object>} Session status and user data
    */
-  isValidSessionStructure(session) {
-    return session &&
-           typeof session === 'object' &&
-           session.user &&
-           session.token &&
-           session.expiresAt &&
-           typeof session.expiresAt === 'number';
-  },
-
-  /**
-   * Get current session from localStorage
-   * @returns {Object|null} User session
-   */
-  getSession() {
+  async getSessionStatus() {
     try {
-      const sessionData = localStorage.getItem('smartbite-session');
-      if (!sessionData) return null;
+      const response = await apiClient.getSessionStatus();
       
-      const session = JSON.parse(sessionData);
-      
-      // Validate session structure
-      if (!this.isValidSessionStructure(session)) {
-        console.warn('Invalid session structure found, clearing session');
-        localStorage.removeItem('smartbite-session');
-        return null;
+      if (response.success && response.authenticated) {
+        return {
+          success: true,
+          authenticated: true,
+          user: response.user,
+          message: 'Session valid'
+        };
+      } else {
+        return {
+          success: true,
+          authenticated: false,
+          user: null,
+          message: 'No active session'
+        };
       }
-      
-      return session;
     } catch (error) {
-      console.error('Failed to parse session data:', error);
-      localStorage.removeItem('smartbite-session');
-      return null;
+      console.error('Session status check failed:', error);
+      return {
+        success: false,
+        authenticated: false,
+        user: null,
+        message: 'Session check failed'
+      };
     }
   },
 
   /**
-   * Get current user
-   * @returns {Object|null} Current user
+   * Refresh session - extends cookie expiration
+   * Should be called when session is near expiry (50+ minutes)
+   * @returns {Promise<Object>} Refresh result
    */
-  getCurrentUser() {
-    const session = this.getSession();
-    return session?.user || null;
+  async refreshSession() {
+    try {
+      const response = await apiClient.refreshSession();
+      
+      if (response.success) {
+        return {
+          success: true,
+          message: 'Session refreshed successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Session refresh failed');
+      }
+    } catch (error) {
+      console.error('Session refresh failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to refresh session'
+      };
+    }
   },
 
   /**
-   * Check if user is authenticated
-   * @returns {boolean} Authentication status
+   * Check if user is authenticated (replaces localStorage check)
+   * @returns {Promise<boolean>} Authentication status
    */
-  isAuthenticated() {
-    const session = this.getSession();
-    return session && Date.now() < session.expiresAt;
+  async isAuthenticated() {
+    const sessionStatus = await this.getSessionStatus();
+    return sessionStatus.authenticated === true;
+  },
+
+  /**
+   * Get current user data (replaces localStorage access)
+   * @returns {Promise<Object|null>} Current user or null
+   */
+  async getCurrentUser() {
+    const sessionStatus = await this.getSessionStatus();
+    return sessionStatus.user || null;
   },
 
   /**
    * Check if user has specific permission
    * @param {string} permission - Permission to check
-   * @returns {boolean} Permission status
+   * @returns {Promise<boolean>} Permission status
    */
-  hasPermission(permission) {
-    const user = this.getCurrentUser();
+  async hasPermission(permission) {
+    const user = await this.getCurrentUser();
     return user?.permissions?.includes(permission) || false;
   },
 
   /**
-   * Get authentication service status and demo credentials
-   * @returns {Promise<Object>} Auth service status
+   * Setup automatic session refresh (call on app initialization)
+   * Refreshes session when it's 50+ minutes old (10 minutes before 1-hour expiry)
    */
-  async getAuthStatus() {
-    try {
-      const response = await apiClient.get('/auth/status');
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response,
-          message: 'Auth status retrieved successfully'
-        };
-      } else {
-        throw new Error(response.error || 'Failed to get auth status');
+  setupSessionRefresh() {
+    // Check session status every 5 minutes
+    setInterval(async () => {
+      try {
+        const sessionStatus = await this.getSessionStatus();
+        
+        if (sessionStatus.authenticated && sessionStatus.user?.sessionAge) {
+          const sessionAgeMinutes = sessionStatus.user.sessionAge;
+          
+          // Refresh if session is 50+ minutes old (10 minutes before expiry)
+          if (sessionAgeMinutes >= 50) {
+            console.log('Auto-refreshing session before expiry');
+            await this.refreshSession();
+          }
+        }
+      } catch (error) {
+        console.warn('Auto session refresh check failed:', error);
       }
-    } catch (error) {
-      console.error('Failed to get auth status:', error);
-      return {
-        success: false,
-        error: error.message,
-        message: 'Failed to get authentication status'
-      };
-    }
+    }, 5 * 60 * 1000); // 5 minutes
   },
 
   /**
-   * Seed demo users for testing (Development only)
-   * @returns {Promise<Object>} Seeding result
+   * Handle authentication errors (401/403 responses)
+   * @param {Error} error - Error from API call
+   * @returns {boolean} Whether error was handled
    */
-  async seedDemoUsers() {
-    try {
-      const response = await apiClient.post('/seedDemoUsers');
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response,
-          message: 'Demo users seeded successfully'
-        };
-      } else {
-        throw new Error(response.error || 'Failed to seed demo users');
-      }
-    } catch (error) {
-      console.error('Failed to seed demo users:', error);
-      return {
-        success: false,
-        error: error.message,
-        message: 'Failed to seed demo users'
-      };
+  handleAuthError(error) {
+    if (error.message.includes('401')) {
+      // Session expired - redirect to login
+      console.warn('Session expired, redirecting to login');
+      window.location.href = '/login';
+      return true;
+    } else if (error.message.includes('403')) {
+      // CSRF token invalid - show error message
+      console.error('CSRF token invalid - please retry the operation');
+      return true;
     }
+    return false;
   }
 };
 

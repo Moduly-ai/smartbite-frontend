@@ -5,40 +5,59 @@ import OwnerDashboard from './components/layout/OwnerDashboard';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import { authService } from './services/authService';
-import apiClient from './services/apiClient';
 
 function App() {
   const [userSession, setUserSession] = useState(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
 
-  // Restore session on app load
+  // Check session status on app load (cookie-based authentication)
   useEffect(() => {
-    const restoreSession = async () => {
+    const checkSession = async () => {
       try {
-        const session = authService.getSession();
+        const sessionStatus = await authService.getSessionStatus();
         
-        if (session && session.user) {
-          // Restore the auth token for API calls
-          apiClient.setAuthToken(session.token);
-          setUserSession(session.user);
+        if (sessionStatus.authenticated && sessionStatus.user) {
+          setUserSession(sessionStatus.user);
         }
       } catch (error) {
-        console.error('App: Failed to restore session:', error);
+        console.error('App: Failed to check session status:', error);
+        // If session check fails, user will see login screen
       } finally {
         setIsLoadingSession(false);
       }
     };
 
-    restoreSession();
+    checkSession();
+    
+    // Setup automatic session refresh
+    authService.setupSessionRefresh();
   }, []);
 
-  const handleLogin = (loginData) => {
-    setUserSession(loginData);
+  const handleLogin = async (loginData) => {
+    // After successful login, get fresh session status to ensure we have latest user data
+    try {
+      const sessionStatus = await authService.getSessionStatus();
+      if (sessionStatus.authenticated && sessionStatus.user) {
+        setUserSession(sessionStatus.user);
+      } else {
+        // Fallback to login data if session status fails
+        setUserSession(loginData);
+      }
+    } catch (error) {
+      console.error('Failed to get session after login:', error);
+      setUserSession(loginData); // Fallback to login data
+    }
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    setUserSession(null);
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      setUserSession(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Clear user session even if API call fails
+      setUserSession(null);
+    }
   };
 
   // Show loading while checking for existing session
