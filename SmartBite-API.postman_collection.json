@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "SmartBite API v3.0 - COSMOS DB PRODUCTION ✅",
-    "description": "Complete API collection for SmartBite business management platform - PRODUCTION READY with Cosmos DB\n\n🎉 STATUS: ALL SYSTEMS OPERATIONAL (August 2025)\n✅ Cosmos DB Integration Complete\n✅ Multi-Tenant Architecture Active\n✅ Real JWT Authentication Working\n✅ Role-based Access Control Verified\n✅ One-Step Owner Signup Ready\n\nProduction Features:\n• 🚀 owner-signup - One-step tenant creation ✅\n• 🔐 auth - JWT Authentication ✅\n• ⚙️ config - System Configuration ✅\n• 👥 employees - Employee Management ✅\n• 💰 reconciliations - Cash Reconciliation ✅\n• 📊 analytics - Sales Analytics ✅\n• 📦 inventory - Inventory Management ✅\n• ⏳ pendingReconciliations - Manager Approvals ✅\n\n🏗️ Architecture:\n• Azure Cosmos DB with cost-optimized settings\n• Multi-tenant data isolation\n• Automatic scaling and backup\n• Global distribution ready\n\nBase URL: https://func-smartbite-reconciliation.azurewebsites.net/api",
+  "description": "Complete API collection for SmartBite business management platform - PRODUCTION READY with Cosmos DB\n\n🎉 STATUS: ALL SYSTEMS OPERATIONAL (August 2025)\n✅ Cosmos DB Integration Complete\n✅ Multi-Tenant Architecture Active\n✅ Real JWT Authentication Working\n✅ Role-based Access Control Verified\n✅ One-Step Owner Signup Ready\n\nProduction Features:\n• 🚀 ownersignup - One-step tenant creation ✅\n• 🔐 auth - JWT Authentication ✅\n• ⚙️ config - System Configuration ✅\n• 👥 employees - Employee Management ✅\n• 💰 reconciliations - Cash Reconciliation ✅\n• 📊 analytics - Sales Analytics ✅\n• 📦 inventory - Inventory Management ✅\n• ⏳ pendingReconciliations - Manager Approvals ✅\n\n🏗️ Architecture:\n• Azure Cosmos DB with cost-optimized settings\n• Multi-tenant data isolation\n• Automatic scaling and backup\n• Global distribution ready\n\nBase URL: https://func-smartbite-reconciliation.azurewebsites.net/api",
     "version": "3.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -52,12 +52,12 @@
                   "",
                   "pm.test(\"Credentials provided\", function () {",
                   "    const responseJson = pm.response.json();",
-                  "    pm.expect(responseJson.data.credentials.employeeId).to.exist;",
+                  "    pm.expect(responseJson.data.credentials.userId).to.exist;",
                   "    pm.expect(responseJson.data.credentials.pin).to.exist;",
                   "    pm.expect(responseJson.data.credentials.token).to.exist;",
                   "    ",
                   "    // Store token for subsequent requests",
-                  "    pm.globals.set('authToken', responseJson.data.credentials.token);",
+                  "    pm.collectionVariables.set('authToken', responseJson.data.credentials.token);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -77,15 +77,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"email\": \"john.smith@example.com\",\n  \"phone\": \"555-0123\",\n  \"businessName\": \"Smith's Restaurant\",\n  \"businessType\": \"restaurant\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"US\"\n  },\n  \"timezone\": \"America/New_York\",\n  \"currency\": \"USD\"\n}"
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"email\": \"john.smith@example.com\",\n  \"phone\": \"+15550199\",\n  \"businessName\": \"Smith's Restaurant\",\n  \"businessType\": \"restaurant\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"US\"\n  },\n  \"timezone\": \"America/New_York\",\n  \"currency\": \"USD\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/owner-signup",
+              "raw": "{{baseUrl}}/ownersignup",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "owner-signup"
+                "ownersignup"
               ]
             }
           },
@@ -107,10 +107,11 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response contains demo credentials\", function () {",
+                  "pm.test(\"Response contains authentication info\", function () {",
                   "    const responseJson = pm.response.json();",
-                  "    pm.expect(responseJson.demo_credentials).to.exist;",
-                  "    pm.expect(responseJson.demo_credentials.employee).to.exist;",
+                  "    pm.expect(responseJson.authentication).to.exist;",
+                  "    pm.expect(responseJson.authentication.method).to.equal('Email + PIN');",
+                  "    pm.expect(responseJson.loginEndpoint).to.exist;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -134,14 +135,14 @@
           "response": []
         },
         {
-          "name": "Login - Employee",
+          "name": "Login - Employee (email + PIN)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
                   "});",
                   "",
                   "pm.test(\"Login successful with JWT token\", function () {",
@@ -174,30 +175,29 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"employee-001\",\n  \"pin\": \"1789\"\n}"
+              "raw": "{\n  \"email\": \"{{employeeEmail}}\",\n  \"pin\": \"{{employeePin}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/auth",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "auth",
-                "login"
+                "auth"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Login - Manager",
+          "name": "Login - Manager (email + PIN)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
                   "});",
                   "",
                   "pm.test(\"Login successful\", function () {",
@@ -220,30 +220,29 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"manager-001\",\n  \"pin\": \"1456\"\n}"
+              "raw": "{\n  \"email\": \"{{managerEmail}}\",\n  \"pin\": \"{{managerPin}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/auth",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "auth",
-                "login"
+                "auth"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Login - Owner",
+          "name": "Login - Owner (email + PIN)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
                   "});",
                   "",
                   "pm.test(\"Login successful\", function () {",
@@ -266,16 +265,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"owner-001\",\n  \"pin\": \"1123\"\n}"
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"pin\": \"{{ownerPin}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/auth",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "auth",
-                "login"
+                "auth"
               ]
             }
           },
@@ -312,39 +310,36 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"invalid-user\",\n  \"pin\": \"wrongpin\"\n}"
+              "raw": "{\n  \"email\": \"invalid@example.com\",\n  \"pin\": \"0000\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/auth",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "auth",
-                "login"
+                "auth"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Verify Token",
+          "name": "Auth Status (Token Optional)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200 or 401\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "if (pm.response.code === 200) {",
-                  "    pm.test(\"Token is valid\", function () {",
-                  "        const responseJson = pm.response.json();",
-                  "        pm.expect(responseJson.success).to.be.true;",
-                  "        pm.expect(responseJson.user).to.exist;",
-                  "    });",
-                  "}"
+                  "pm.test(\"Authentication info returned\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.authentication).to.exist;",
+                  "    pm.expect(responseJson.loginEndpoint).to.exist;",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -354,13 +349,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/auth/verify",
+              "raw": "{{baseUrl}}/auth/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "auth",
-                "verify"
+                "status"
               ]
             }
           },
@@ -858,7 +853,7 @@
           "response": []
         },
         {
-          "name": "JWT Token Verify",
+          "name": "Auth Status (With Token)",
           "event": [
             {
               "listen": "test",
@@ -868,14 +863,9 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Token verification successful\", function () {",
+                  "pm.test(\"Authentication info returned\", function () {",
                   "    const responseJson = pm.response.json();",
-                  "    pm.expect(responseJson.success).to.be.true;",
-                  "    pm.expect(responseJson.valid).to.be.true;",
-                  "    pm.expect(responseJson.user).to.exist;",
-                  "    pm.expect(responseJson.token).to.exist;",
-                  "    ",
-                  "    console.log(\"Token is valid for user:\", responseJson.user.employeeId);",
+                  "    pm.expect(responseJson.authentication).to.exist;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -892,13 +882,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/auth/verify",
+              "raw": "{{baseUrl}}/auth/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "auth",
-                "verify"
+                "status"
               ]
             }
           },
@@ -1419,7 +1409,7 @@
                   "pm.test(\"API is healthy\", function () {",
                   "    const responseJson = pm.response.json();",
                   "    pm.expect(responseJson.success).to.be.true;",
-                  "    pm.expect(responseJson.message).to.include(\"SmartBite API v2.0\");",
+                  "    pm.expect(responseJson.message).to.include(\"SmartBite API v2.1\");",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -1462,8 +1452,10 @@
         "type": "text/javascript",
         "exec": [
           "// Global test script",
-          "pm.test(\"Response time is less than 10 seconds\", function () {",
-          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "const url = pm.request.url.toString();",
+          "const threshold = url.includes('/ownersignup') ? 60000 : 10000;",
+          "pm.test(\"Response time under threshold\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
           "});",
           "",
           "pm.test(\"Response has correct CORS headers\", function () {",

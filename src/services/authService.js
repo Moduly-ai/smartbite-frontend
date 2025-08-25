@@ -16,18 +16,28 @@ export const authService = {
    */
   async ownerSignup(signupData) {
     try {
-      // Use regular POST since signup is a public endpoint (no CSRF required)
-      const response = await apiClient.post('/ownersignup', signupData);
+  // Use regular POST since signup is a public endpoint (no CSRF required)
+  // API generates credentials (incl. PIN) — do not send PIN from client
+  const { pin, ...clean } = signupData || {};
+  const response = await apiClient.post('/ownersignup', clean, { timeout: 30000 });
       
       if (response.success) {
-        // Cookie is set automatically by browser - no JavaScript handling needed
         // Map the owner data to user field for consistent login flow
         const user = response.user || response.data?.owner || null;
-        
+        // Capture token from credentials to authenticate immediately
+        const token = response.token || response.data?.credentials?.token;
+        if (token) {
+          apiClient.setAuthToken(token);
+          try { localStorage.setItem('smartbite-token', token); } catch {}
+        }
+        if (user) {
+          try { localStorage.setItem('smartbite-user', JSON.stringify(user)); } catch {}
+        }
         return {
           success: true,
           data: response.data,
-          user: user,
+          user,
+          token,
           message: response.message || 'Account created successfully'
         };
       } else {
@@ -57,13 +67,21 @@ export const authService = {
   async login(email, pin) {
     try {
       // Login is a public endpoint - no CSRF token required
-      const response = await apiClient.post('/auth', {
+  const response = await apiClient.post('/auth', {
         email,
         pin
       });
       
       if (response.success) {
-        // Cookie is set automatically by browser - no JavaScript handling needed
+        // Store JWT for Authorization header usage
+        if (response.token) {
+          apiClient.setAuthToken(response.token);
+          try { localStorage.setItem('smartbite-token', response.token); } catch {}
+        }
+        // Store user for role-based UI
+        if (response.user) {
+          try { localStorage.setItem('smartbite-user', JSON.stringify(response.user)); } catch {}
+        }
         return {
           success: true,
           user: response.user,
@@ -92,7 +110,13 @@ export const authService = {
    */
   async logout() {
     try {
-      await apiClient.delete('/session/logout');
+      // Best-effort server logout; ignore failures
+  try { await apiClient.post('/auth/logout'); } catch {}
+      apiClient.clearAuthToken();
+      try {
+        localStorage.removeItem('smartbite-token');
+        localStorage.removeItem('smartbite-user');
+      } catch {}
       // Cookie is cleared automatically by server
       return {
         success: true,
@@ -115,7 +139,12 @@ export const authService = {
    */
   async getSessionStatus() {
     try {
-      const response = await apiClient.getSessionStatus();
+      // Prefer token from storage on reloads
+      try {
+        const stored = localStorage.getItem('smartbite-token');
+        if (stored) apiClient.setAuthToken(stored);
+      } catch {}
+  const response = await apiClient.get('/auth/status');
       
       if (response.success && response.authenticated) {
         return {
@@ -153,7 +182,12 @@ export const authService = {
    */
   async refreshSession() {
     try {
-      const response = await apiClient.refreshSession();
+      const token = (() => { try { return localStorage.getItem('smartbite-token'); } catch { return null; } })();
+      if (!token) {
+        return { success: false, message: 'No token to refresh' };
+      }
+      // Verify token still valid; if backend exposes refresh, wire it here
+  const response = await apiClient.post('/auth/verify');
       
       if (response.success) {
         return {

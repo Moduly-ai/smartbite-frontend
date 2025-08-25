@@ -5,15 +5,21 @@ import OwnerDashboard from './components/layout/OwnerDashboard';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import { authService } from './services/authService';
+import apiClient from './services/apiClient';
 
 function App() {
   const [userSession, setUserSession] = useState(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
 
-  // Check session status on app load (cookie-based authentication)
+  // Check session status on app load (JWT auth)
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Load token from storage if present
+        try {
+          const token = localStorage.getItem('smartbite-token');
+          if (token) apiClient.setAuthToken(token);
+        } catch {}
         const sessionStatus = await authService.getSessionStatus();
         
         if (sessionStatus.authenticated && sessionStatus.user) {
@@ -36,16 +42,18 @@ function App() {
     authService.setupSessionRefresh();
   }, []);
 
-  const handleLogin = async (loginData) => {
-    // For cookie-based auth, just use the login data directly
-    // The session status check in useEffect will handle authentication state
-    setUserSession(loginData);
+  const handleLogin = async (user) => {
+    setUserSession(user);
   };
 
   const handleLogout = async () => {
     try {
       await authService.logout();
       setUserSession(null);
+      try {
+        localStorage.removeItem('smartbite-token');
+        localStorage.removeItem('smartbite-user');
+      } catch {}
     } catch (error) {
       console.error('Logout failed:', error);
       // Clear user session even if API call fails

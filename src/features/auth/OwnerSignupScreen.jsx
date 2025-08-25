@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
+import SignupSuccess from './SignupSuccess.jsx';
 
 const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   const [formData, setFormData] = useState({
@@ -7,7 +8,6 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     lastName: '',
     email: '',
     phone: '',
-    pin: '',
     businessName: '',
     businessType: 'restaurant',
     address: {
@@ -23,6 +23,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
+  const [successResult, setSuccessResult] = useState(null);
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
@@ -41,21 +42,13 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   };
 
   const validateStep1 = () => {
-    const { firstName, lastName, email, phone, pin } = formData;
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !pin.trim()) {
+    const { firstName, lastName, email, phone } = formData;
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim()) {
       setError('Please fill in all personal information fields');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
-      return false;
-    }
-    if (pin.length < 4 || pin.length > 6) {
-      setError('PIN must be 4-6 digits');
-      return false;
-    }
-    if (!/^\d+$/.test(pin)) {
-      setError('PIN must contain only numbers');
       return false;
     }
     return true;
@@ -99,7 +92,8 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
       console.log('Signup result:', result); // Debug log
       
       if (result.success) {
-        onSignupSuccess(result);
+        // Show success screen with credentials; defer continuation until user clicks
+        setSuccessResult(result);
       } else {
         setError(result.error || 'Signup failed');
       }
@@ -132,6 +126,16 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     { value: 'GBP', label: 'British Pound (£)' },
     { value: 'CAD', label: 'Canadian Dollar (C$)' }
   ];
+
+  if (successResult) {
+    return (
+      <SignupSuccess
+        result={successResult}
+        onContinue={() => onSignupSuccess(successResult)}
+        onBackToLogin={onBackToLogin}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900">
@@ -223,20 +227,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                   />
                 </div>
 
-                <div>
-                  <label className="form-label">PIN</label>
-                  <input
-                    type="password"
-                    required
-                    className="form-input"
-                    value={formData.pin}
-                    onChange={(e) => handleInputChange('pin', e.target.value)}
-                    placeholder="Create a 4-6 digit PIN"
-                    maxLength="6"
-                    minLength="4"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">This PIN will be used to login to your account</p>
-                </div>
+                {/* PIN removed - API generates credentials and PIN */}
               </>
             )}
 

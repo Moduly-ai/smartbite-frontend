@@ -1,8 +1,7 @@
 /**
  * Centralized API client for SmartBite application
- * Uses secure cookie-based authentication (httpOnly, secure, SameSite=Strict)
- * NO localStorage/sessionStorage - browser handles all session management
- * CSRF protection for all state-changing operations
+ * JWT Bearer authentication with Authorization header
+ * CSRF helpers remain but are not required for JWT flows
  */
 
 import { env } from '../config/env.js';
@@ -17,6 +16,7 @@ class ApiClient {
     this.retryAttempts = 3;
     this.retryDelay = 1000;
     this.csrfToken = null;
+  this.authToken = null; // JWT token
   }
 
   /**
@@ -47,14 +47,23 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     
+    // Support per-request timeout override
+    const effectiveTimeout = options.timeout ?? this.timeout;
+
+    const { timeout, ...restOptions } = options;
+
     const config = {
-      ...options,
-      credentials: 'include', // MANDATORY for cookie-based auth
+      ...restOptions,
       headers: {
         ...this.defaultHeaders,
-        ...options.headers,
+        ...restOptions.headers,
       },
     };
+
+    // Attach Authorization header if we have a token
+    if (this.authToken && !config.headers['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
 
     // Add CSRF token for state-changing operations
     if (['POST', 'PUT', 'DELETE'].includes(options.method) && this.csrfToken) {
@@ -64,7 +73,7 @@ class ApiClient {
 
     // Add timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
     config.signal = controller.signal;
 
     let lastError;
@@ -81,8 +90,12 @@ class ApiClient {
           // Don't retry for client errors (4xx)
           if (response.status >= 400 && response.status < 500) {
             // Don't log 401 errors for session status - they're expected when not logged in
-            if (!(response.status === 401 && endpoint === '/session/status')) {
+            if (!(response.status === 401 && (endpoint === '/session/status' || endpoint === '/api/auth/status' || endpoint === '/api/auth/verify'))) {
               console.error('API Client Error:', errorText);
+            }
+            // If unauthorized, clear token client-side to force re-auth
+            if (response.status === 401) {
+              this.clearAuthToken();
             }
             throw error;
           }
@@ -109,7 +122,7 @@ class ApiClient {
         clearTimeout(timeoutId);
         lastError = error;
         
-        if (error.name === 'AbortError') {
+  if (error.name === 'AbortError') {
           throw new Error('Request timeout');
         }
         
@@ -148,7 +161,7 @@ class ApiClient {
    * @returns {Promise<Object>} Response data
    */
   async post(endpoint, data = null, options = {}) {
-    return this.request(endpoint, {
+  return this.request(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : null,
       ...options,
@@ -262,6 +275,27 @@ class ApiClient {
    */
   clearCSRFToken() {
     this.csrfToken = null;
+  }
+
+  /**
+   * Set JWT auth token for Authorization header
+   * @param {string} token
+   */
+  setAuthToken(token) {
+    this.authToken = token;
+    if (token) {
+      this.setHeader('Authorization', `Bearer ${token}`);
+    } else {
+      this.removeHeader('Authorization');
+    }
+  }
+
+  /**
+   * Clear JWT token
+   */
+  clearAuthToken() {
+    this.authToken = null;
+    this.removeHeader('Authorization');
   }
 
   /**

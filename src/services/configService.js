@@ -11,9 +11,9 @@ export const configService = {
    * @returns {boolean} True if authenticated
    */
   ensureAuthenticated() {
-    const session = this.getStoredSession();
-    if (session?.token) {
-      apiClient.setAuthToken(session.token);
+    const token = this.getStoredToken();
+    if (token) {
+      apiClient.setAuthToken(token);
       return true;
     }
     console.warn('ConfigService: No valid authentication token found');
@@ -21,24 +21,14 @@ export const configService = {
   },
 
   /**
-   * Get stored session from localStorage
-   * @returns {Object|null} Session data
+   * Get stored JWT token from localStorage
+   * @returns {string|null} Token
    */
-  getStoredSession() {
+  getStoredToken() {
     try {
-      const sessionData = localStorage.getItem('smartbite-session');
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
-        // Check if session is still valid
-        if (session.expiresAt && Date.now() < session.expiresAt) {
-          return session;
-        } else {
-          console.warn('ConfigService: Session expired');
-          localStorage.removeItem('smartbite-session');
-        }
-      }
+      return localStorage.getItem('smartbite-token');
     } catch (error) {
-      console.error('ConfigService: Error reading session:', error);
+      console.error('ConfigService: Error reading token:', error);
     }
     return null;
   },
@@ -56,7 +46,7 @@ export const configService = {
       };
     }
     try {
-      const response = await apiClient.get('/config');
+  const response = await apiClient.get('/config');
       if (response.success && response.config) {
         return {
           success: true,
@@ -117,8 +107,8 @@ export const configService = {
     }
 
     // Validate that user has owner permissions
-    const session = this.getStoredSession();
-    if (session?.user?.userType !== 'owner') {
+  const user = this.getStoredUser();
+  if (user?.userType !== 'owner') {
       return {
         success: false,
         error: 'Permission denied',
@@ -133,7 +123,7 @@ export const configService = {
       console.log('ConfigService: Making authenticated PUT request to /config');
       console.log('ConfigService: Request body:', JSON.stringify(cleanConfig, null, 2));
       
-      const response = await apiClient.put('/config', cleanConfig);
+  const response = await apiClient.put('/config', cleanConfig);
       console.log('ConfigService: PUT response received:', response);
       
       if (response.success && response.config) {
@@ -192,6 +182,19 @@ export const configService = {
         error: error.message,
         message: 'Failed to update configuration. Please try again.'
       };
+    }
+  },
+
+  /**
+   * Get stored user from localStorage
+   * @returns {Object|null} User
+   */
+  getStoredUser() {
+    try {
+      const u = localStorage.getItem('smartbite-user');
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
     }
   },
 
