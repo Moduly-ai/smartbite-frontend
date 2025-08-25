@@ -4,7 +4,6 @@ import OwnerSignupScreen from './OwnerSignupScreen.jsx';
 
 const LoginScreen = ({ onLogin }) => {
   const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
-  const [loginType, setLoginType] = useState('employee');
   const [formData, setFormData] = useState({
     email: '',
     pin: ''
@@ -80,40 +79,6 @@ const LoginScreen = ({ onLogin }) => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Login Type Toggle */}
-          <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
-            <button
-              type="button"
-              onClick={() => {
-                setLoginType('employee');
-                setFormData({ email: '', pin: '' });
-                setError('');
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginType === 'employee' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Employee
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLoginType('owner');
-                setFormData({ email: '', pin: '' });
-                setError('');
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginType === 'owner' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Owner
-            </button>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="form-label">
@@ -157,7 +122,7 @@ const LoginScreen = ({ onLogin }) => {
                   : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               }`}
             >
-              {isLoading ? 'Signing In...' : `Sign In as ${loginType === 'owner' ? 'Owner' : 'Employee'}`}
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
