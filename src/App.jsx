@@ -46,19 +46,19 @@ function App() {
     setUserSession(user);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    // Immediately clear user session and redirect to login
+    setUserSession(null);
     try {
-      await authService.logout();
-      setUserSession(null);
-      try {
-        localStorage.removeItem('smartbite-token');
-        localStorage.removeItem('smartbite-user');
-      } catch {}
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Clear user session even if API call fails
-      setUserSession(null);
-    }
+      localStorage.removeItem('smartbite-token');
+      localStorage.removeItem('smartbite-user');
+    } catch {}
+    
+    // Make logout API call in background - don't wait for it
+    authService.logout().catch(error => {
+      console.warn('Background logout API call failed:', error);
+      // User is already logged out locally, so this failure doesn't matter
+    });
   };
 
   // Show loading while checking for existing session

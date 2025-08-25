@@ -11,14 +11,14 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     businessName: '',
     businessType: 'restaurant',
     address: {
-      street: '',
-      city: '',
+      country: 'AU',
       state: '',
       zipCode: '',
-      country: 'US'
+      street: '',
+      city: ''
     },
-    timezone: 'America/New_York',
-    currency: 'USD'
+    timezone: 'Australia/Sydney',
+    currency: 'AUD'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -223,7 +223,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                     className="form-input"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="555-0123"
+                    placeholder="+61 2 1234 5678"
                   />
                 </div>
 
@@ -263,6 +263,45 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                 </div>
 
                 <div>
+                  <label className="form-label">Country</label>
+                  <select
+                    className="form-input"
+                    value={formData.address.country}
+                    onChange={(e) => handleInputChange('address.country', e.target.value)}
+                  >
+                    <option value="AU">Australia</option>
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="UK">United Kingdom</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="form-label">State/Territory</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-input"
+                      value={formData.address.state}
+                      onChange={(e) => handleInputChange('address.state', e.target.value)}
+                      placeholder="NSW"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Postcode</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-input"
+                      value={formData.address.zipCode}
+                      onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
+                      placeholder="2000"
+                    />
+                  </div>
+                </div>
+
+                <div>
                   <label className="form-label">Street Address</label>
                   <input
                     type="text"
@@ -270,60 +309,20 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                     className="form-input"
                     value={formData.address.street}
                     onChange={(e) => handleInputChange('address.street', e.target.value)}
-                    placeholder="123 Main St"
+                    placeholder="123 George Street"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="form-label">City</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      value={formData.address.city}
-                      onChange={(e) => handleInputChange('address.city', e.target.value)}
-                      placeholder="New York"
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">State</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      value={formData.address.state}
-                      onChange={(e) => handleInputChange('address.state', e.target.value)}
-                      placeholder="NY"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="form-label">ZIP Code</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      value={formData.address.zipCode}
-                      onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
-                      placeholder="10001"
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Country</label>
-                    <select
-                      className="form-input"
-                      value={formData.address.country}
-                      onChange={(e) => handleInputChange('address.country', e.target.value)}
-                    >
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
-                      <option value="AU">Australia</option>
-                      <option value="UK">United Kingdom</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="form-label">City/Suburb</label>
+                  <input
+                    type="text"
+                    required
+                    className="form-input"
+                    value={formData.address.city}
+                    onChange={(e) => handleInputChange('address.city', e.target.value)}
+                    placeholder="Sydney"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
