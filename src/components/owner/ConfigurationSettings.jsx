@@ -55,6 +55,78 @@ const ConfigurationSettings = ({ user, onClose }) => {
     return normalized;
   };
 
+  // Transform API field names to frontend field names for editing
+  const transformApiToFrontend = (apiConfig) => {
+    if (!apiConfig) return apiConfig;
+    
+    const transformed = { ...apiConfig };
+    
+    // Handle reconciliation field mappings (API → Frontend)
+    if (transformed.reconciliation) {
+      const rec = { ...transformed.reconciliation };
+      
+      // requireManagerApproval → requireApproval
+      if ('requireManagerApproval' in rec) {
+        rec.requireApproval = rec.requireManagerApproval;
+        delete rec.requireManagerApproval;
+      }
+      
+      // varianceTolerance → tolerance  
+      if ('varianceTolerance' in rec) {
+        rec.tolerance = rec.varianceTolerance;
+        delete rec.varianceTolerance;
+      }
+      
+      // autoSubmitThreshold → autoApprove (threshold > 0 = true)
+      if ('autoSubmitThreshold' in rec) {
+        rec.autoApprove = rec.autoSubmitThreshold > 0;
+        delete rec.autoSubmitThreshold;
+      }
+      
+      transformed.reconciliation = rec;
+    }
+    
+    return transformed;
+  };
+
+  // Transform frontend field names to API field names for submission
+  const transformFrontendToApi = (frontendConfig) => {
+    if (!frontendConfig) return frontendConfig;
+    
+    const apiConfig = { ...frontendConfig };
+    
+    // Transform reconciliation field mappings (Frontend → API)
+    // New API accepts all sections: registers, posTerminals, reconciliation, business
+    if (apiConfig.reconciliation) {
+      const rec = { ...apiConfig.reconciliation };
+      
+      // requireApproval → requireManagerApproval (if exists)
+      if ('requireApproval' in rec) {
+        rec.requireManagerApproval = rec.requireApproval;
+        delete rec.requireApproval;
+      }
+      
+      // tolerance → varianceTolerance (if exists) 
+      if ('tolerance' in rec) {
+        rec.varianceTolerance = rec.tolerance;
+        delete rec.tolerance;
+      }
+      
+      // autoApprove → autoSubmitThreshold (if exists)
+      if ('autoApprove' in rec) {
+        if (!rec.autoApprove) {
+          rec.autoSubmitThreshold = 0;
+        }
+        // When true, omit the field entirely
+        delete rec.autoApprove;
+      }
+      
+      apiConfig.reconciliation = rec;
+    }
+    
+    return apiConfig;
+  };
+
   // Load current configuration
   useEffect(() => {
     const loadConfig = async () => {
@@ -63,7 +135,12 @@ const ConfigurationSettings = ({ user, onClose }) => {
         const result = await configService.getConfig();
         
         if (result.success) {
-          const normalizedConfig = normalizeConfig(result.config);
+          // New API structure: config is directly under result.config (no more nested settings)
+          const apiConfig = result.config;
+          
+          // Transform API field names to frontend field names for editing
+          const transformedConfig = transformApiToFrontend(apiConfig);
+          const normalizedConfig = normalizeConfig(transformedConfig);
           setConfig(normalizedConfig);
         } else {
           setErrors({ general: 'Failed to load configuration' });
@@ -220,7 +297,9 @@ const ConfigurationSettings = ({ user, onClose }) => {
       setSaving(true);
       setSaveStatus(null);
       
-      const result = await configService.updateSystemConfig(config);
+      // Transform frontend fields to API format and send  
+      const apiConfig = transformFrontendToApi(config);
+      const result = await configService.updateSystemConfig(apiConfig);
       
       if (result.success) {
         setSaveStatus({ type: 'success', message: result.message });
