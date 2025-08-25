@@ -93,7 +93,22 @@ const ConfigurationSettings = ({ user, onClose }) => {
   const transformFrontendToApi = (frontendConfig) => {
     if (!frontendConfig) return frontendConfig;
     
-    const apiConfig = { ...frontendConfig };
+    // Filter out metadata fields that API doesn't accept
+    const {
+      id,
+      tenantId, 
+      configType,
+      createdAt,
+      updatedAt,
+      _rid,
+      _etag, 
+      _self,
+      _attachments,
+      _ts,
+      ...cleanConfig
+    } = frontendConfig;
+    
+    const apiConfig = { ...cleanConfig };
     
     // Transform reconciliation field mappings (Frontend → API)
     // New API accepts all sections: registers, posTerminals, reconciliation, business
