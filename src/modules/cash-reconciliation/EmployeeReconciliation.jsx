@@ -509,19 +509,19 @@ const EmployeeReconciliation = ({ user }) => {
                 {Array.from({ length: config.registers.count }, (_, i) => {
                   const registerNum = i + 1;
                   const registerName = config.registers.names[i] || `Register ${registerNum}`;
-                  const total = calculations.registerTotals?.[registerNum] || 0;
+                  const bankingAmount = calculations.registerBanking?.[registerNum] || 0;
                   
                   return (
                     <div key={registerNum} className="flex justify-between items-center">
-                      <span className="text-sm text-green-700">{registerName} Cash</span>
-                      <span className="text-lg font-bold text-green-900">${total.toFixed(2)}</span>
+                      <span className="text-sm text-green-700">{registerName} Banking</span>
+                      <span className="text-lg font-bold text-green-900">${bankingAmount.toFixed(2)}</span>
                     </div>
                   );
                 })}
                 <div className="border-t border-green-300 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold text-green-800">Total Cash</span>
-                    <span className="text-xl font-bold text-green-900">${(calculations.totalCash || 0).toFixed(2)}</span>
+                    <span className="text-base font-semibold text-green-800">Total Banking</span>
+                    <span className="text-xl font-bold text-green-900">${(calculations.actualBanking || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
