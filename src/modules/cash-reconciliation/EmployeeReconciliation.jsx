@@ -139,13 +139,12 @@ const EmployeeReconciliation = ({ user }) => {
       try {
         // Try to get from API first, fall back to cached/default if needed
         const result = await configService.getConfig();
-        const configToUse = result.success ? result.config : configService.getDefaultConfig();
+        const configToUse = result.success ? result.config : null;
         setConfig(configToUse);
         setIsLoadingConfig(false);
       } catch (error) {
         console.error('Failed to load config:', error);
-        const defaultConfig = configService.getDefaultConfig();
-        setConfig(defaultConfig);
+        setConfig(null);
         setIsLoadingConfig(false);
       }
     };
@@ -204,7 +203,7 @@ const EmployeeReconciliation = ({ user }) => {
     );
   }
 
-  if (!config) {
+  if (!config || !config.registers || !config.registers.count) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
