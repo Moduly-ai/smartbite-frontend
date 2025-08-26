@@ -86,14 +86,8 @@ export const configService = {
       ...cleanConfig
     } = config;
 
-    // Clean the business section to remove fields not accepted by API
-    if (cleanConfig.business) {
-      const {
-        address,
-        ...businessFields
-      } = cleanConfig.business;
-      cleanConfig.business = businessFields;
-    }
+    // Remove entire business object for now to avoid API validation errors
+    delete cleanConfig.business;
 
     return cleanConfig;
   },
