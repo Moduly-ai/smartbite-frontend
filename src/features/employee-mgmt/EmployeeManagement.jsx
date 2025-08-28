@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { employeeService } from '../../services/employeeService.js';
+import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -57,6 +60,9 @@ const EmployeeManagement = () => {
   };
 
   const handleSaveEmployee = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    
     try {
       let result;
       
@@ -74,11 +80,13 @@ const EmployeeManagement = () => {
         setShowAddModal(false);
         setError(null);
       } else {
-        setError(result.message || result.error);
+        setError(formatErrorDisplay(result.message || result.error, 'employee'));
       }
     } catch (error) {
       console.error('Failed to save employee:', error);
-      setError(error.message || 'Failed to save employee');
+      setError(formatErrorDisplay(error, 'employee'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

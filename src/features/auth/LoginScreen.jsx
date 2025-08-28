@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
 import OwnerSignupScreen from './OwnerSignupScreen.jsx';
+import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const LoginScreen = ({ onLogin }) => {
   const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
@@ -32,7 +34,7 @@ const LoginScreen = ({ onLogin }) => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please try again.');
+      setError(formatErrorDisplay(err, 'auth'));
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +110,7 @@ const LoginScreen = ({ onLogin }) => {
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm">
+              <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm whitespace-pre-line">
                 {error}
               </div>
             )}
@@ -116,13 +118,16 @@ const LoginScreen = ({ onLogin }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+              className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors flex items-center justify-center ${
                 isLoading 
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               }`}
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading && <LoadingSpinner size="small" text="" />}
+              <span className={isLoading ? 'ml-2' : ''}>
+                {isLoading ? getLoadingMessage('auth') : 'Sign In'}
+              </span>
             </button>
           </form>
 

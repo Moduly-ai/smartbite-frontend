@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
 import SignupSuccess from './SignupSuccess.jsx';
+import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   const [formData, setFormData] = useState({
@@ -97,11 +99,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
       }
     } catch (err) {
       console.error('Signup error:', err);
-      if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
-        setError('⚠️ Network Error: Unable to connect to server. This appears to be a CORS configuration issue. Please contact support or try again later.');
-      } else {
-        setError(err.message || 'Signup failed. Please try again.');
-      }
+      setError(formatErrorDisplay(err, 'signup'));
     } finally {
       setIsLoading(false);
     }
@@ -340,7 +338,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
             )}
 
             {error && (
-              <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm">
+              <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm whitespace-pre-line">
                 {error}
               </div>
             )}
@@ -369,13 +367,16 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+                className={`flex-1 py-3 px-4 rounded-lg font-medium text-white transition-colors flex items-center justify-center ${
                   isLoading 
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
                 }`}
               >
-                {isLoading ? 'Creating Account...' : step === 1 ? 'Next' : 'Create Account'}
+                {isLoading && step === 2 && <LoadingSpinner size="small" text="" />}
+                <span className={isLoading && step === 2 ? 'ml-2' : ''}>
+                  {isLoading && step === 2 ? getLoadingMessage('signup') : step === 1 ? 'Next' : 'Create Account'}
+                </span>
               </button>
             </div>
           </form>

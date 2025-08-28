@@ -3,6 +3,8 @@ import { reconciliationService } from '../../services/reconciliationService.js';
 import { configService } from '../../services/configService.js';
 import RegisterComponent from '../../components/shared/RegisterComponent.jsx';
 import PosTerminalComponent from '../../components/shared/PosTerminalComponent.jsx';
+import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const EmployeeReconciliation = ({ user }) => {
   // ALL STATE AND HOOKS MUST BE DECLARED FIRST - BEFORE ANY CONDITIONAL RETURNS
@@ -377,7 +379,7 @@ const EmployeeReconciliation = ({ user }) => {
       console.error('Submission error:', error);
       setSubmitStatus({ 
         type: 'error', 
-        message: 'Failed to submit. Data saved locally. Please try again.' 
+        message: formatErrorDisplay(error, 'reconciliation') 
       });
     } finally {
       setIsSubmitting(false);
@@ -602,7 +604,7 @@ const EmployeeReconciliation = ({ user }) => {
         </div>
 
         {submitStatus && (
-          <div className={`p-4 rounded-lg ${submitStatus.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+          <div className={`p-4 rounded-lg whitespace-pre-line ${submitStatus.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
             {submitStatus.message}
           </div>
         )}
@@ -678,9 +680,12 @@ const EmployeeReconciliation = ({ user }) => {
           <button
             onClick={submitReconciliation}
             disabled={isSubmitting}
-            className={`btn-primary ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-primary flex items-center justify-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Reconciliation'}
+            {isSubmitting && <LoadingSpinner size="small" text="" />}
+            <span className={isSubmitting ? 'ml-2' : ''}>
+              {isSubmitting ? getLoadingMessage('reconciliation_submit') : 'Submit Reconciliation'}
+            </span>
           </button>
         )}
       </div>

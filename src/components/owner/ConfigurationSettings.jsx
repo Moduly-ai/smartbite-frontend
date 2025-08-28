@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { configService } from '../../services/configService.js';
+import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import LoadingSpinner from '../shared/LoadingSpinner.jsx';
 
 const ConfigurationSettings = ({ user, onClose }) => {
   const [config, setConfig] = useState(null);
@@ -328,7 +330,7 @@ const ConfigurationSettings = ({ user, onClose }) => {
       }
     } catch (error) {
       console.error('Failed to save configuration:', error);
-      setSaveStatus({ type: 'error', message: 'Failed to save configuration' });
+      setSaveStatus({ type: 'error', message: formatErrorDisplay(error, 'config') });
     } finally {
       setSaving(false);
     }
@@ -549,7 +551,7 @@ const ConfigurationSettings = ({ user, onClose }) => {
 
             {/* Save Status */}
             {saveStatus && (
-              <div className={`p-4 rounded-lg ${
+              <div className={`p-4 rounded-lg whitespace-pre-line ${
                 saveStatus.type === 'success' 
                   ? 'bg-green-50 text-green-800 border border-green-200' 
                   : 'bg-red-50 text-red-800 border border-red-200'
@@ -573,9 +575,12 @@ const ConfigurationSettings = ({ user, onClose }) => {
             <button
               onClick={saveConfiguration}
               disabled={isSaving || Object.keys(errors).length > 0}
-              className={`btn-primary ${(isSaving || Object.keys(errors).length > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`btn-primary flex items-center justify-center ${(isSaving || Object.keys(errors).length > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isSaving ? 'Saving...' : 'Save Configuration'}
+              {isSaving && <LoadingSpinner size="small" text="" />}
+              <span className={isSaving ? 'ml-2' : ''}>
+                {isSaving ? getLoadingMessage('config_update') : 'Save Configuration'}
+              </span>
             </button>
           </div>
         </div>
