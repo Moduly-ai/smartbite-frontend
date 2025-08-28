@@ -14,7 +14,6 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
       country: 'AU',
       state: '',
       zipCode: '',
-      street: '',
       city: ''
     },
     timezone: 'Australia/Sydney',
@@ -55,10 +54,9 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
   };
 
   const validateStep2 = () => {
-    const { businessName, address } = formData;
-    if (!businessName.trim() || !address.street.trim() || !address.city.trim() || 
-        !address.state.trim() || !address.zipCode.trim()) {
-      setError('Please fill in all business information fields');
+    const { address } = formData;
+    if (!address.city.trim() || !address.state.trim() || !address.zipCode.trim()) {
+      setError('Please fill in all required address fields (city, state, postcode)');
       return false;
     }
     return true;
@@ -236,14 +234,13 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
                 
                 <div>
-                  <label className="form-label">Business Name</label>
+                  <label className="form-label">Business Name (Optional)</label>
                   <input
                     type="text"
-                    required
                     className="form-input"
                     value={formData.businessName}
                     onChange={(e) => handleInputChange('businessName', e.target.value)}
-                    placeholder="Smith's Restaurant"
+                    placeholder="Smith's Restaurant (if not provided, will be generated from your name)"
                   />
                 </div>
 
@@ -299,18 +296,6 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                       placeholder="2000"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="form-label">Street Address</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    value={formData.address.street}
-                    onChange={(e) => handleInputChange('address.street', e.target.value)}
-                    placeholder="123 George Street"
-                  />
                 </div>
 
                 <div>

@@ -18,7 +18,25 @@ export const authService = {
     try {
   // Use regular POST since signup is a public endpoint (no CSRF required)
   // API generates credentials (incl. PIN) — do not send PIN from client
-  const { pin, ...clean } = signupData || {};
+  const { pin, ...dataWithoutPin } = signupData || {};
+  
+  // Clean up the data for API submission
+  const clean = {
+    ...dataWithoutPin,
+    // Remove street address from address object, keep city, state, zipCode, country
+    address: {
+      city: dataWithoutPin.address?.city,
+      state: dataWithoutPin.address?.state,
+      zipCode: dataWithoutPin.address?.zipCode,
+      country: dataWithoutPin.address?.country
+    }
+  };
+  
+  // If businessName is empty, omit it so the backend can generate it
+  if (!dataWithoutPin.businessName?.trim()) {
+    delete clean.businessName;
+  }
+  
   const response = await apiClient.post('/ownersignup', clean, { timeout: 30000 });
       
       if (response.success) {
