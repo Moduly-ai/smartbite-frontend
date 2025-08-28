@@ -61,59 +61,79 @@ const OwnerReconciliationReview = () => {
   };
 
   const handleEditReconciliation = (reconciliation) => {
-    setEditData({
-      totalSales: reconciliation.formData.totalSales,
-      eftpos: reconciliation.formData.eftpos,
-      payouts: reconciliation.formData.payouts,
-      actualBanking: reconciliation.formData.actualBanking,
-      comments: reconciliation.formData.comments
-    });
+    const num = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const totalSales = num(
+      reconciliation?.summary?.totalSales ??
+      reconciliation?.formData?.totalSales ??
+      reconciliation?.totalSales
+    );
+    const eftpos = num(
+      reconciliation?.summary?.totalEftpos ??
+      reconciliation?.formData?.eftpos?.total ??
+      reconciliation?.formData?.eftpos ??
+      reconciliation?.eftpos
+    );
+    const payouts = num(
+      reconciliation?.summary?.payouts ??
+      reconciliation?.formData?.payouts ??
+      reconciliation?.payouts
+    );
+    const actualBanking = num(
+      reconciliation?.summary?.actualBanking ??
+      reconciliation?.formData?.actualBanking ??
+      reconciliation?.actualBanking
+    );
+    const comments = reconciliation?.formData?.comments || reconciliation?.comments || '';
+
+    setEditData({ totalSales, eftpos, payouts, actualBanking, comments });
     setSelectedReconciliation(reconciliation);
     setShowEditModal(true);
   };
 
   const handleSaveEdit = async () => {
     try {
-      // Recalculate with new values
-      const expectedBanking = editData.totalSales - editData.eftpos - editData.payouts;
-      const variance = editData.actualBanking - expectedBanking;
+  // Recalculate with new values (numeric coercion)
+  const ts = Number(editData.totalSales) || 0;
+  const ef = Number(editData.eftpos) || 0;
+  const po = Number(editData.payouts) || 0;
+  const ab = Number(editData.actualBanking) || 0;
+  const expectedBanking = ts - ef - po;
+  const variance = ab - expectedBanking;
       const newStatus = Math.abs(variance) < 0.01 ? 'approved' : 'variance_found';
       
-      // Update via API if possible
-      const result = await reconciliationService.updateReconciliationStatus(
+      // Update via API with edited fields
+      const result = await reconciliationService.updateReconciliation(
         selectedReconciliation.id,
-        newStatus,
-        `Updated by manager: ${editData.comments || 'No additional comments'}`
+        {
+          // Only send fields that are allowed to change post-submission
+          payouts: po,
+          actualBanking: ab,
+          expectedBanking,
+          variance,
+          comments: editData.comments || ''
+        },
+        { status: newStatus }
       );
       
       if (result.success) {
-        // Update local state
-        setReconciliations(prev => prev.map(rec => 
-          rec.id === selectedReconciliation.id 
-            ? {
-                ...rec,
-                formData: { ...rec.formData, ...editData },
-                calculations: {
-                  ...rec.calculations,
-                  expectedBanking,
-                  variance,
-                  isBalanced: Math.abs(variance) < 0.01
-                },
-                status: newStatus
-              }
-            : rec
-        ));
-        setSyncStatus({
-          type: 'success',
-          message: 'Reconciliation updated successfully'
-        });
+        // Reload from server to reflect canonical values
+        await loadReconciliations();
+        setSyncStatus({ type: 'success', message: 'Reconciliation updated successfully' });
       } else {
         // Fallback to local update
         setReconciliations(prev => prev.map(rec => 
           rec.id === selectedReconciliation.id 
             ? {
                 ...rec,
-                formData: { ...rec.formData, ...editData },
+                formData: { 
+                  ...rec.formData, 
+                  payouts: po,
+                  actualBanking: ab,
+                  comments: editData.comments || rec.formData?.comments
+                },
                 calculations: {
                   ...rec.calculations,
                   expectedBanking,
@@ -131,7 +151,7 @@ const OwnerReconciliationReview = () => {
         });
       }
       
-      setShowEditModal(false);
+  setShowEditModal(false);
     } catch (error) {
       console.error('Failed to save edit:', error);
       setSyncStatus({
@@ -276,7 +296,7 @@ const OwnerReconciliationReview = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-semibold text-gray-900">{reconciliation.employeeName}</h4>
+                    <h4 className="font-semibold text-gray-900">{reconciliation.employeeName || reconciliation.employee?.name || reconciliation.user?.name || 'Unknown Employee'}</h4>
                     {reconciliation.localUpdate && (
                       <span className="w-2 h-2 bg-orange-400 rounded-full" title="Has local changes pending sync"></span>
                     )}
@@ -376,7 +396,7 @@ const OwnerReconciliationReview = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">Name:</span>
-                      <span className="ml-2 font-medium">{selectedReconciliation.employeeName}</span>
+                      <span className="ml-2 font-medium">{selectedReconciliation.employeeName || selectedReconciliation.employee?.name || selectedReconciliation.user?.name || 'Unknown Employee'}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Date:</span>
@@ -477,7 +497,7 @@ const OwnerReconciliationReview = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Edit Reconciliation - {selectedReconciliation.employeeName}
+                Edit Reconciliation - {selectedReconciliation.employeeName || selectedReconciliation.employee?.name || selectedReconciliation.user?.name || 'Unknown Employee'}
               </h3>
               
               <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4">
@@ -537,9 +557,13 @@ const OwnerReconciliationReview = () => {
 
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>New Expected Banking:</strong> ${(editData.totalSales - editData.eftpos - editData.payouts).toFixed(2)}
+                    <strong>New Expected Banking:</strong> ${(
+                      (Number(editData.totalSales) || 0) - (Number(editData.eftpos) || 0) - (Number(editData.payouts) || 0)
+                    ).toFixed(2)}
                     <br />
-                    <strong>New Variance:</strong> ${(editData.actualBanking - (editData.totalSales - editData.eftpos - editData.payouts)).toFixed(2)}
+                    <strong>New Variance:</strong> ${(
+                      (Number(editData.actualBanking) || 0) - ((Number(editData.totalSales) || 0) - (Number(editData.eftpos) || 0) - (Number(editData.payouts) || 0))
+                    ).toFixed(2)}
                   </p>
                 </div>
 

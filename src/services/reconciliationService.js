@@ -4,6 +4,7 @@
  */
 
 import apiClient from './apiClient.js';
+import { env } from '../config/env.js';
 
 export const reconciliationService = {
   /**
@@ -133,6 +134,99 @@ export const reconciliationService = {
         success: false,
         error: error.message,
         message: 'Failed to update reconciliation status'
+      };
+    }
+  },
+
+  /**
+   * Update reconciliation fields (totals, eftpos, payouts, actualBanking, comments) and optionally status
+   * @param {string} reconciliationId
+   * @param {{ totalSales?: number, eftpos?: number, payouts?: number, actualBanking?: number, comments?: string }} updates
+   * @param {{ status?: string }} options
+   * @returns {Promise<Object>} Update result
+   */
+  async updateReconciliation(reconciliationId, updates = {}, options = {}) {
+    try {
+      const has = (k) => updates[k] !== undefined && updates[k] !== null;
+      const numOr = (v, d) => v != null ? Number(v) : d;
+
+      const ts = has('totalSales') ? Number(updates.totalSales) : undefined;
+      const ef = has('eftpos') ? Number(updates.eftpos) : undefined;
+      const po = has('payouts') ? Number(updates.payouts) : undefined;
+      const ab = has('actualBanking') ? Number(updates.actualBanking) : undefined;
+
+      // Compute expected and variance when we have enough inputs
+      const eb = has('expectedBanking')
+        ? Number(updates.expectedBanking)
+        : (ts != null || ef != null || po != null)
+          ? (numOr(ts, 0) - numOr(ef, 0) - numOr(po, 0))
+          : undefined;
+      const varc = has('variance')
+        ? Number(updates.variance)
+        : (ab != null && eb != null)
+          ? (ab - eb)
+          : undefined;
+      const isBalanced = varc != null ? Math.abs(varc) < 0.01 : undefined;
+
+      const body = {
+        // status/comments
+        ...(options.status ? { status: options.status } : {}),
+        ...(updates.comments ? { comments: updates.comments } : {}),
+        reviewedAt: new Date().toISOString(),
+        
+        // Only include fields that were provided to avoid overwriting server values
+        ...(ts != null ? { totalSales: ts } : {}),
+        ...(ef != null ? { eftpos: ef } : {}),
+        ...(po != null ? { payouts: po } : {}),
+        ...(ab != null ? { actualBanking: ab } : {}),
+
+        formData: {
+          ...(ts != null ? { totalSales: ts } : {}),
+          ...(ef != null ? { eftpos: { total: ef } } : {}),
+          ...(po != null ? { payouts: po } : {}),
+          ...(ab != null ? { actualBanking: ab } : {}),
+          ...(updates.comments ? { comments: updates.comments } : {})
+        },
+        summary: {
+          ...(ts != null ? { totalSales: ts } : {}),
+          ...(ef != null ? { totalEftpos: ef } : {}),
+          ...(po != null ? { payouts: po } : {}),
+          ...(ab != null ? { actualBanking: ab } : {}),
+          ...(eb != null ? { expectedBanking: eb } : {}),
+          ...(varc != null ? { variance: varc } : {})
+        },
+        calculations: {
+          ...(eb != null ? { expectedBanking: eb } : {}),
+          ...(varc != null ? { variance: varc } : {}),
+          ...(isBalanced != null ? { isBalanced } : {})
+        }
+      };
+
+      if (env.ENABLE_LOGGING) {
+        try { console.debug('[Reconciliation] PUT payload', { reconciliationId, body }); } catch {}
+      }
+
+      const response = await apiClient.put(`/reconciliations/${reconciliationId}`, body);
+
+      if (env.ENABLE_LOGGING) {
+        try { console.debug('[Reconciliation] PUT response', response); } catch {}
+      }
+
+      if (response.success) {
+        return {
+          success: true,
+          data: response,
+          message: 'Reconciliation updated successfully'
+        };
+      } else {
+        throw new Error(response.error || 'Update failed');
+      }
+    } catch (error) {
+      console.error('Failed to update reconciliation:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to update reconciliation'
       };
     }
   },

@@ -330,9 +330,10 @@ const EmployeeReconciliation = ({ user }) => {
         }
       });
 
+      const displayName = user?.name || user?.fullName || user?.email || user?.employeeId || 'Unknown Employee';
       const result = await reconciliationService.submitReconciliation(
         submitData, 
-        user?.name || 'Unknown Employee'
+        displayName
       );
       
       if (result.success) {
