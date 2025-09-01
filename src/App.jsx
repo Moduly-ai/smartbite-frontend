@@ -95,7 +95,7 @@ function App() {
 
       {/* Login/Signup Screen */}
       {(currentView === 'login' || currentView === 'signup') && (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-neutral-50">
           <LoginScreen 
             onLogin={handleLogin}
             initialView={currentView}
@@ -106,23 +106,23 @@ function App() {
 
       {/* App Views - Show appropriate dashboard based on user type */}
       {currentView === 'app' && userSession?.userType === 'owner' && (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-neutral-50">
           <OwnerDashboard user={userSession} onLogout={handleLogout} />
         </div>
       )}
 
       {/* Default to employee reconciliation */}
       {currentView === 'app' && userSession && userSession.userType !== 'owner' && (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-neutral-50">
           <div className="container mx-auto px-4 py-8">
             <header className="text-center mb-8 flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">SmartBite Cash Reconciliation</h1>
-                <p className="text-gray-600">Employee: {userSession.name}</p>
+                <h1 className="text-3xl font-bold text-neutral-900 mb-2 font-display">SmartBite Cash Reconciliation</h1>
+                <p className="text-neutral-900 opacity-70">Employee: {userSession.name}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium"
+                className="btn-secondary hover:bg-secondary hover:border-secondary text-secondary hover:text-white px-4 py-2 font-medium"
               >
                 Logout
               </button>
