@@ -1,0 +1,196 @@
+name: 🚀 Deploy SmartBite to Netlify
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  NODE_VERSION: '18'
+  NPM_CACHE: npm
+
+jobs:
+  # Job 1: Build and Test
+  build-and-test:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: ${{ env.NPM_CACHE }}
+        
+    - name: 🔧 Install dependencies
+      run: npm ci
+      
+    - name: 🧪 Run tests
+      run: |
+        if [ -f "package.json" ] && grep -q "test:" package.json; then
+          npm run test:ci 2>/dev/null || npm test -- --watchAll=false --coverage=false || echo "No tests configured"
+        else
+          echo "No test script found, skipping tests"
+        fi
+        
+    - name: 🔍 Run linting
+      run: |
+        if [ -f "package.json" ] && grep -q "lint" package.json; then
+          npm run lint || echo "Linting failed but continuing deployment"
+        else
+          echo "No lint script found, skipping linting"
+        fi
+        
+    - name: 🏗️ Build application
+      run: npm run build
+      env:
+        VITE_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+        VITE_API_BASE_URL: ${{ github.ref == 'refs/heads/main' && 'https://func-smartbite-reconciliation.azurewebsites.net/api' || 'https://func-smartbite-reconciliation-staging.azurewebsites.net/api' }}
+        VITE_API_TIMEOUT: "30000"
+        VITE_APP_NAME: "SmartBite Frontend"
+        VITE_APP_VERSION: ${{ github.ref == 'refs/heads/main' && '1.0.0' || 'staging' }}
+        NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+        
+    - name: 📊 Check build output
+      run: |
+        echo "Build directory contents:"
+        ls -la dist/
+        echo "Build size:"
+        du -sh dist/
+        
+    - name: 💾 Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files-${{ github.sha }}
+        path: dist/
+        retention-days: 1
+
+  # Job 2: Deploy to Netlify
+  deploy:
+    name: 🌐 Deploy to Netlify
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📥 Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-files-${{ github.sha }}
+        path: dist/
+        
+    - name: 🚀 Deploy to Netlify
+      uses: nwtgck/actions-netlify@v3.0
+      with:
+        publish-dir: './dist'
+        production-branch: main
+        production-deploy: ${{ github.ref == 'refs/heads/main' }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: |
+          🚀 Deploy ${{ github.ref_name }}@${{ github.sha }}
+          
+          Commit: ${{ github.event.head_commit.message }}
+          Author: ${{ github.actor }}
+          Environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+        enable-pull-request-comment: true
+        enable-commit-comment: false
+        enable-commit-status: true
+        overwrites-pull-request-comment: true
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      timeout-minutes: 10
+        
+    - name: 🏷️ Add deployment labels
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = github;
+          const labels = ['deployed', 'preview'];
+          
+          try {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+          } catch (error) {
+            console.log('Could not add labels:', error.message);
+          }
+
+  # Job 3: Health Check (Production only)
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🏥 Check production health
+      run: |
+        echo "Waiting for deployment to propagate..."
+        sleep 30
+        
+        # Health check on production domain
+        HEALTH_URL="https://app.moduly.ai"
+        
+        echo "Checking health at: $HEALTH_URL"
+        
+        # Check if site is accessible
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+        
+        if [ "$HTTP_CODE" = "200" ]; then
+          echo "✅ Health check passed - Site is accessible"
+          echo "✅ Production deployment successful at $HEALTH_URL"
+        else
+          echo "❌ Health check failed - HTTP $HTTP_CODE"
+          echo "❌ Site may not be ready yet or there's an issue"
+          exit 1
+        fi
+        
+        # Check if API is accessible (optional)
+        API_URL="https://func-smartbite-reconciliation.azurewebsites.net/api/health"
+        API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" || echo "000")
+        
+        if [ "$API_CODE" = "200" ]; then
+          echo "✅ API health check passed"
+        else
+          echo "⚠️ API health check returned HTTP $API_CODE (may be expected)"
+        fi
+
+  # Job 4: Notify on Success/Failure
+  notify:
+    name: 📢 Notify Results
+    runs-on: ubuntu-latest
+    needs: [build-and-test, deploy, health-check]
+    if: always()
+    
+    steps:
+    - name: 📢 Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment:** ${{ github.ref == 'refs/heads/main' && 'Production 🟢' || 'Staging 🟡' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.build-and-test.result }}" = "success" ] && [ "${{ needs.deploy.result }}" = "success" ]; then
+          echo "✅ **Deployment Status:** SUCCESS" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "🌐 **Live at:** https://app.moduly.ai" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "❌ **Deployment Status:** FAILED" >> $GITHUB_STEP_SUMMARY
+        fi

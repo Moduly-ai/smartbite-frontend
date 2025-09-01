@@ -1,0 +1,54 @@
+# Security headers for SmartBite Frontend on Netlify
+# These headers enhance security and performance
+
+# Apply to all pages
+/*
+  # Security Headers
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  
+  # Content Security Policy (adjust as needed)
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://func-smartbite-reconciliation.azurewebsites.net https://func-smartbite-reconciliation-staging.azurewebsites.net;
+
+# Cache static assets aggressively
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache JavaScript and CSS files
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+  
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache images
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+  
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+  
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+  
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+  
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+# Don't cache HTML files (for SPA updates)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Service worker (if you add one later)
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest file
+/manifest.json
+  Cache-Control: public, max-age=86400

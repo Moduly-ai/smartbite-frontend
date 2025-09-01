@@ -1,0 +1,12 @@
+# Netlify SPA redirect rules for React Router
+# This ensures all routes are handled by the client-side router
+
+# Redirect all non-asset requests to index.html for SPA routing
+/*    /index.html   200
+
+# API proxy rules (optional - if you want to proxy API calls through Netlify)
+# /api/*  https://func-smartbite-reconciliation.azurewebsites.net/api/:splat  200
+
+# Force HTTPS redirects (optional - can also be done in Netlify UI)
+# http://app.moduly.ai/*  https://app.moduly.ai/:splat  301!
+# http://staging-app.moduly.ai/*  https://staging-app.moduly.ai/:splat  301!
