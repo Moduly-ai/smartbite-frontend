@@ -2,50 +2,16 @@
 # Automated deployment configuration for app.moduly.ai
 
 [build]
-  command = "npm run build"
+  command = "echo 'Builds disabled - using GitHub Actions only'"
   publish = "dist"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
+  ignore = "true"  # Disable Netlify auto-builds - GitHub Actions handles deployment
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "9"
 
-# Production environment (main branch)
-[context.production]
-  command = "npm run build"
-  [context.production.environment]
-    VITE_ENVIRONMENT = "production"
-    VITE_API_BASE_URL = "https://func-smartbite-reconciliation.azurewebsites.net/api"
-    VITE_API_TIMEOUT = "30000"
-    VITE_APP_NAME = "SmartBite Frontend"
-    VITE_APP_VERSION = "1.0.0"
-    NODE_ENV = "production"
-
-# Staging environment (develop branch)
-[context.develop]
-  command = "npm run build"
-  [context.develop.environment]
-    VITE_ENVIRONMENT = "staging"
-    VITE_API_BASE_URL = "https://func-smartbite-reconciliation-staging.azurewebsites.net/api"
-    VITE_API_TIMEOUT = "30000"
-    VITE_APP_NAME = "SmartBite Frontend (Staging)"
-    VITE_APP_VERSION = "staging"
-    NODE_ENV = "development"
-
-# Deploy previews (all other branches and PRs)
-[context.deploy-preview]
-  command = "npm run build"
-  [context.deploy-preview.environment]
-    VITE_ENVIRONMENT = "staging"
-    VITE_API_BASE_URL = "https://func-smartbite-reconciliation-staging.azurewebsites.net/api"
-    VITE_API_TIMEOUT = "30000"
-    VITE_APP_NAME = "SmartBite Frontend (Preview)"
-    VITE_APP_VERSION = "preview"
-    NODE_ENV = "development"
-
-# Branch deploy settings
-[context.branch-deploy]
-  command = "npm run build"
+# All environment configuration now managed via GitHub Actions and GitHub Secrets
+# No hard-coded values - secure deployment only through CI/CD pipeline
 
 # SPA routing - redirect all routes to index.html
 [[redirects]]

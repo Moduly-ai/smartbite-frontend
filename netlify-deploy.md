@@ -130,18 +130,17 @@ moduly.ai          (Your existing marketing website)
    - **Verify SSL:** Green lock in browser
    - **Test functionality:** Login and core features work
 
-## 🎉 **CONGRATULATIONS! Your Site is Live**
+## ⚠️ **IMPORTANT: Complete Required Configuration**
 
-**✅ SmartBite is now successfully deployed at `https://smartbiteapp.moduly.ai`**
+**✅ SmartBite basic site is deployed at `https://smartbiteapp.moduly.ai`**
 
-Your basic deployment is complete! The following steps are **optional enhancements** for professional development workflows.
+**🔧 NEXT REQUIRED STEP:** Configure GitHub Actions for proper deployment. Your application needs secure environment variables and API configuration to function properly.
 
 ---
 
-### Step 3: (Optional) Configure GitHub Actions CI/CD Pipeline
+### Step 3: Configure GitHub Actions CI/CD Pipeline (REQUIRED)
 
-**Current Setup:** Netlify automatically builds when you push to Git
-**Enhancement:** Add advanced CI/CD with testing, health checks, and deployment notifications
+**⚠️ IMPORTANT:** This step is **REQUIRED** for proper deployment. Your application requires secure environment variables and API keys that must be configured through GitHub Secrets. Netlify auto-deployment has been disabled.
 
 #### 3.1 Get Required Secrets
 
@@ -284,15 +283,12 @@ Where to get: Azure Portal → SIT Function App → App Keys → Function Keys
 
 ## 🚀 **How Deployment Works:**
 
-### **Current Setup (Basic Netlify):**
+### **Current Setup (GitHub Actions Only):**
 ```
-Git Push → Netlify Auto-Build → Live Site
+Git Push → GitHub Actions → Tests → Build → Deploy to Netlify → Health Check → Live Site
 ```
 
-### **With GitHub Actions (Enhanced):**
-```
-Git Push → GitHub Actions → Tests → Build → Deploy to Netlify → Health Check
-```
+**Note:** Netlify auto-deployment is disabled. All deployments now go through GitHub Actions for proper environment variable injection and security.
 
 ## 📋 **Deployment by Environment:**
 
@@ -323,9 +319,9 @@ git push origin sit
 # → Creates deploy preview with SIT config
 ```
 
-### Step 4: (Optional) Test Automated Deployment
+### Step 4: Test Automated Deployment
 
-**Note:** Only complete this if you set up GitHub Actions in Step 3.
+**This step verifies your GitHub Actions deployment pipeline is working correctly.**
 
 #### 4.1 Trigger Pipeline
 ```bash
@@ -378,9 +374,9 @@ Code Changes → Git Push → Netlify Build → Live on smartbiteapp.moduly.ai
 
 ---
 
-## 🚀 **OPTIONAL: Advanced Development Workflow**
+## 🚀 **DEVELOPMENT WORKFLOW REFERENCE**
 
-The following sections are for teams wanting professional CI/CD pipelines with testing and monitoring.
+The following sections explain how to use your GitHub Actions deployment pipeline for daily development.
 
 ## 🔄 DEVELOPMENT WORKFLOW (Advanced)
 

@@ -22,7 +22,10 @@
       "Bash(npm install)",
       "Bash(grep:*)",
       "Bash(sed:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(yamllint:*)"
     ],
     "deny": [],
     "ask": []

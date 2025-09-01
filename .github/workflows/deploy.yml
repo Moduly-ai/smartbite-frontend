@@ -49,32 +49,32 @@ jobs:
     - name: 🏗️ Build application
       run: npm run build
       env:
-  # Environment detection
-  VITE_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
-  NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+        # Environment detection
+        VITE_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+        NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
-  # API Configuration from secrets
-  VITE_API_BASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_API_BASE_URL_PROD || github.ref == 'refs/heads/sit' && secrets.VITE_API_BASE_URL_STAGING || secrets.VITE_API_BASE_URL_STAGING }}
-  VITE_API_TIMEOUT: ${{ secrets.VITE_API_TIMEOUT }}
-  # SIT Function Key
-  VITE_API_FUNCTION_KEY: ${{ github.ref == 'refs/heads/sit' && secrets.VITE_API_SIT_KEY || '' }}
+        # API Configuration from secrets
+        VITE_API_BASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_API_BASE_URL_PROD || github.ref == 'refs/heads/sit' && secrets.VITE_API_BASE_URL_STAGING || secrets.VITE_API_BASE_URL_STAGING }}
+        VITE_API_TIMEOUT: ${{ secrets.VITE_API_TIMEOUT }}
+        # SIT Function Key
+        VITE_API_FUNCTION_KEY: ${{ github.ref == 'refs/heads/sit' && secrets.VITE_API_SIT_KEY || '' }}
 
-  # App Configuration from secrets
-  VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
-  VITE_APP_VERSION: ${{ github.ref == 'refs/heads/main' && secrets.VITE_APP_VERSION_PROD || secrets.VITE_APP_VERSION_STAGING }}
-  VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
-  VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        # App Configuration from secrets
+        VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
+        VITE_APP_VERSION: ${{ github.ref == 'refs/heads/main' && secrets.VITE_APP_VERSION_PROD || secrets.VITE_APP_VERSION_STAGING }}
+        VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
+        VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
 
-  # Feature Flags from secrets
-  VITE_DEBUG_MODE: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
-  VITE_LOG_LEVEL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_LOG_LEVEL_PROD || secrets.VITE_LOG_LEVEL_STAGING }}
-  VITE_FEATURE_ADVANCED_REPORTING: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
-  VITE_FEATURE_BETA_UI: "false"
-  VITE_SHOW_DEV_TOOLS: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        # Feature Flags from secrets
+        VITE_DEBUG_MODE: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        VITE_LOG_LEVEL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_LOG_LEVEL_PROD || secrets.VITE_LOG_LEVEL_STAGING }}
+        VITE_FEATURE_ADVANCED_REPORTING: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        VITE_FEATURE_BETA_UI: "false"
+        VITE_SHOW_DEV_TOOLS: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
 
-  # Optional: Analytics (if configured)
-  VITE_GOOGLE_ANALYTICS_ID: ${{ secrets.VITE_GOOGLE_ANALYTICS_ID }}
-  VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        # Optional: Analytics (if configured)
+        VITE_GOOGLE_ANALYTICS_ID: ${{ secrets.VITE_GOOGLE_ANALYTICS_ID }}
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         
     - name: 📊 Check build output
       run: |
