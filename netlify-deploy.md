@@ -269,6 +269,60 @@ Where to get: Sentry.io dashboard (error tracking service)
 2. **Enable workflows** if prompted
 3. **Pipeline will run automatically** on your next push
 
+#### 3.4 Add SIT Environment Support (Optional)
+If you want a separate SIT environment:
+
+```
+Name: VITE_API_BASE_URL_SIT
+Value: https://func-smartbite-sit.azurewebsites.net/api
+Where to get: Your SIT Azure Functions API URL
+
+Name: VITE_API_SIT_KEY
+Value: your-sit-function-key
+Where to get: Azure Portal → SIT Function App → App Keys → Function Keys
+```
+
+## 🚀 **How Deployment Works:**
+
+### **Current Setup (Basic Netlify):**
+```
+Git Push → Netlify Auto-Build → Live Site
+```
+
+### **With GitHub Actions (Enhanced):**
+```
+Git Push → GitHub Actions → Tests → Build → Deploy to Netlify → Health Check
+```
+
+## 📋 **Deployment by Environment:**
+
+### **For Production Deployment:**
+```bash
+git checkout main
+git add .
+git commit -m "feat: your changes"
+git push origin main
+# → Deploys to smartbiteapp.moduly.ai with production config
+```
+
+### **For Staging Deployment:**
+```bash
+git checkout develop  # or create develop branch
+git add .
+git commit -m "feat: staging changes"
+git push origin develop
+# → Creates deploy preview with staging config
+```
+
+### **For SIT Deployment (if configured):**
+```bash
+git checkout sit  # or create sit branch
+git add .
+git commit -m "feat: sit testing"
+git push origin sit
+# → Creates deploy preview with SIT config
+```
+
 ### Step 4: (Optional) Test Automated Deployment
 
 **Note:** Only complete this if you set up GitHub Actions in Step 3.
