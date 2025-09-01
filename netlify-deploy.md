@@ -173,47 +173,95 @@ Name: NETLIFY_SITE_ID
 Value: your-site-id-here
 ```
 
-**Environment Configuration Secrets:**
+**Environment Configuration Secrets (Detailed):**
+
+#### 🌐 **API Configuration Secrets**
+
 ```
-# API Configuration
 Name: VITE_API_BASE_URL_PROD
 Value: https://func-smartbite-reconciliation.azurewebsites.net/api
+Where to get: Your Azure Functions production API URL
+└── Azure Portal → Function Apps → Your SmartBite API → Overview → URL
+└── Remove trailing slashes, add '/api' suffix
 
-Name: VITE_API_BASE_URL_STAGING
+Name: VITE_API_BASE_URL_STAGING  
 Value: https://func-smartbite-reconciliation-staging.azurewebsites.net/api
+Where to get: Your Azure Functions staging API URL (if you have one)
+└── If no staging API: Use same as production for now
+└── For separate staging: Deploy second Azure Function App
 
 Name: VITE_API_TIMEOUT
 Value: 30000
+Where to get: Standard value (30 seconds in milliseconds)
+└── Increase if your API calls are slow: 45000 (45 sec), 60000 (60 sec)
+└── Decrease for faster timeout: 15000 (15 sec), 10000 (10 sec)
+```
 
-# App Configuration  
+#### 📱 **Application Configuration Secrets**
+
+```
 Name: VITE_APP_NAME
 Value: SmartBite Frontend
+Where to get: Your application display name
+└── Used in browser title, notifications, error messages
+└── Can be: "SmartBite Cash Reconciliation", "SmartBite POS", etc.
 
 Name: VITE_APP_VERSION_PROD
 Value: 1.0.0
+Where to get: Your current production version
+└── Use semantic versioning: 1.0.0, 1.1.0, 2.0.0
+└── Update manually when releasing new features
 
 Name: VITE_APP_VERSION_STAGING
 Value: staging
+Where to get: Fixed value for staging builds
+└── Can be: "staging", "beta", "dev", or version like "1.1.0-beta"
 
 Name: VITE_APP_DOMAIN
 Value: smartbiteapp.moduly.ai
+Where to get: Your custom domain (without https://)
+└── This is the domain you configured in Step 2
+└── Used for CORS configuration and internal references
 
 Name: VITE_APP_URL
 Value: https://smartbiteapp.moduly.ai
+Where to get: Your full production URL (with https://)
+└── This is your live site URL
+└── Used for health checks and deployment notifications
+```
 
-# Logging Configuration
+#### 📊 **Logging Configuration Secrets**
+
+```
 Name: VITE_LOG_LEVEL_PROD
 Value: error
+Where to get: Choose logging level for production
+└── Options: "error" (recommended), "warn", "info", "debug"
+└── "error" = only show critical errors (fastest, least noise)
 
-Name: VITE_LOG_LEVEL_STAGING
+Name: VITE_LOG_LEVEL_STAGING  
 Value: info
+Where to get: Choose logging level for staging/testing
+└── Options: "debug" (most detailed), "info" (recommended), "warn", "error"
+└── "info" = show general info + errors (good for debugging)
+```
 
-# Optional Analytics (leave empty if not using)
+#### 📈 **Optional Analytics Secrets**
+
+```
 Name: VITE_GOOGLE_ANALYTICS_ID
 Value: (leave empty or add GA-XXXXXXXXX)
+Where to get: Google Analytics dashboard
+└── Google Analytics → Admin → Property Settings → Tracking ID
+└── Format: GA-XXXXXXXXX or G-XXXXXXXXXX (GA4)
+└── Leave empty if not using Google Analytics
 
 Name: VITE_SENTRY_DSN
-Value: (leave empty or add your Sentry DSN)
+Value: (leave empty or add your Sentry DSN) 
+Where to get: Sentry.io dashboard (error tracking service)
+└── Sentry → Project Settings → Client Keys (DSN)
+└── Format: https://xxxxx@xxxxx.ingest.sentry.io/xxxxx
+└── Leave empty if not using error tracking
 ```
 
 #### 3.3 Enable GitHub Actions
