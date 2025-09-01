@@ -27,8 +27,7 @@ export default defineConfig(({ command, mode }) => {
           // Optimize chunk splitting for better caching
           manualChunks: {
             'react-vendor': ['react', 'react-dom'],
-            'router-vendor': ['react-router-dom'],
-            'ui-vendor': ['@headlessui/react', '@heroicons/react']
+            'utils-vendor': ['axios', '@microsoft/signalr']
           }
         }
       },

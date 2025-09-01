@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LandingPage from './components/LandingPage';
 import LoginScreen from './features/auth/LoginScreen';
 import EmployeeReconciliation from './modules/cash-reconciliation/EmployeeReconciliation';
 import OwnerDashboard from './components/layout/OwnerDashboard';
@@ -10,6 +11,7 @@ import apiClient from './services/apiClient';
 function App() {
   const [userSession, setUserSession] = useState(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'app'
 
   // Check session status on app load (JWT auth)
   useEffect(() => {
@@ -24,6 +26,7 @@ function App() {
         
         if (sessionStatus.authenticated && sessionStatus.user) {
           setUserSession(sessionStatus.user);
+          setCurrentView('app');
         }
       } catch (error) {
         // 401 errors are expected when not logged in - don't log as errors
@@ -44,11 +47,13 @@ function App() {
 
   const handleLogin = async (user) => {
     setUserSession(user);
+    setCurrentView('app');
   };
 
   const handleLogout = () => {
-    // Immediately clear user session and redirect to login
+    // Immediately clear user session and redirect to landing
     setUserSession(null);
+    setCurrentView('landing');
     try {
       localStorage.removeItem('smartbite-token');
       localStorage.removeItem('smartbite-user');
@@ -61,6 +66,18 @@ function App() {
     });
   };
 
+  const handleGetStarted = () => {
+    setCurrentView('signup');
+  };
+
+  const handleSignIn = () => {
+    setCurrentView('login');
+  };
+
+  const handleBackToLanding = () => {
+    setCurrentView('landing');
+  };
+
   // Show loading while checking for existing session
   if (isLoadingSession) {
     return <LoadingSpinner fullScreen text="Initializing SmartBite..." />;
@@ -68,22 +85,34 @@ function App() {
 
   return (
     <ErrorBoundary>
-      {/* Show login screen if no user session */}
-      {!userSession && (
+      {/* Landing Page */}
+      {currentView === 'landing' && (
+        <LandingPage
+          onGetStarted={handleGetStarted}
+          onSignIn={handleSignIn}
+        />
+      )}
+
+      {/* Login/Signup Screen */}
+      {(currentView === 'login' || currentView === 'signup') && (
         <div className="min-h-screen bg-gray-50">
-          <LoginScreen onLogin={handleLogin} />
+          <LoginScreen 
+            onLogin={handleLogin}
+            initialView={currentView}
+            onBackToLanding={handleBackToLanding}
+          />
         </div>
       )}
 
-      {/* Show appropriate dashboard based on user type */}
-      {userSession?.userType === 'owner' && (
+      {/* App Views - Show appropriate dashboard based on user type */}
+      {currentView === 'app' && userSession?.userType === 'owner' && (
         <div className="min-h-screen bg-gray-50">
           <OwnerDashboard user={userSession} onLogout={handleLogout} />
         </div>
       )}
 
       {/* Default to employee reconciliation */}
-      {userSession && userSession.userType !== 'owner' && (
+      {currentView === 'app' && userSession && userSession.userType !== 'owner' && (
         <div className="min-h-screen bg-gray-50">
           <div className="container mx-auto px-4 py-8">
             <header className="text-center mb-8 flex justify-between items-center">

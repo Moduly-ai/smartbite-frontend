@@ -143,10 +143,10 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
             </svg>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-white">
-            Start Your SmartBite Journey
+            Welcome to SmartBite
           </h2>
           <p className="mt-2 text-sm text-green-200">
-            Create your restaurant management account
+            Set up your restaurant in just 2 simple steps
           </p>
         </div>
 
@@ -172,7 +172,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
           <form onSubmit={step === 2 ? handleSignup : handleNextStep} className="space-y-6">
             {step === 1 && (
               <>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Tell us about yourself</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -229,7 +229,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
 
             {step === 2 && (
               <>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Your business details</h3>
                 
                 <div>
                   <label className="form-label">Business Name (Optional)</label>
@@ -360,7 +360,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
                   onClick={onBackToLogin}
                   className="flex-1 py-3 px-4 rounded-lg font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
-                  Back to Login
+                  Already have an account?
                 </button>
               )}
 
@@ -375,7 +375,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
               >
                 {isLoading && step === 2 && <LoadingSpinner size="small" text="" />}
                 <span className={isLoading && step === 2 ? 'ml-2' : ''}>
-                  {isLoading && step === 2 ? getLoadingMessage('signup') : step === 1 ? 'Next' : 'Create Account'}
+                  {isLoading && step === 2 ? getLoadingMessage('signup') : step === 1 ? 'Continue' : 'Start Free Trial'}
                 </span>
               </button>
             </div>

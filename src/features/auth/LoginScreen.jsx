@@ -4,8 +4,8 @@ import OwnerSignupScreen from './OwnerSignupScreen.jsx';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
 import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
-const LoginScreen = ({ onLogin }) => {
-  const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
+const LoginScreen = ({ onLogin, initialView = 'login', onBackToLanding }) => {
+  const [currentView, setCurrentView] = useState(initialView); // 'login' or 'signup'
   const [formData, setFormData] = useState({
     email: '',
     pin: ''
@@ -132,18 +132,28 @@ const LoginScreen = ({ onLogin }) => {
           </form>
 
 
-          {/* Owner Signup Link */}
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-600 mb-3">
-              Don't have an account?
+          {/* Navigation Links */}
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center space-y-3">
+            <p className="text-sm text-gray-600">
+              New to SmartBite?
             </p>
             <button
               type="button"
               onClick={handleShowSignup}
               className="w-full py-2 px-4 rounded-lg font-medium text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
             >
-              Create Owner Account
+              Get Started - Free Trial
             </button>
+            
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
+              >
+                ← Back to Home
+              </button>
+            )}
           </div>
         </div>
       </div>
