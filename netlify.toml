@@ -2,9 +2,9 @@
 # Automated deployment configuration for app.moduly.ai
 
 [build]
-  command = "echo 'Builds disabled - using GitHub Actions only'"
+  command = "npm run build"
   publish = "dist"
-  ignore = "true"  # Disable Netlify auto-builds - GitHub Actions handles deployment
+  # Allow both GitHub Actions and Netlify builds - GitHub Actions will be primary
 
 [build.environment]
   NODE_VERSION = "18"

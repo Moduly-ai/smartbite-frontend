@@ -25,7 +25,8 @@
       "Bash(git rm:*)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(yamllint:*)"
+      "Bash(yamllint:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
