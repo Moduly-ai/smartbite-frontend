@@ -49,12 +49,30 @@ jobs:
     - name: 🏗️ Build application
       run: npm run build
       env:
+        # Environment detection
         VITE_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
-        VITE_API_BASE_URL: ${{ github.ref == 'refs/heads/main' && 'https://func-smartbite-reconciliation.azurewebsites.net/api' || 'https://func-smartbite-reconciliation-staging.azurewebsites.net/api' }}
-        VITE_API_TIMEOUT: "30000"
-        VITE_APP_NAME: "SmartBite Frontend"
-        VITE_APP_VERSION: ${{ github.ref == 'refs/heads/main' && '1.0.0' || 'staging' }}
         NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+        
+        # API Configuration from secrets
+        VITE_API_BASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_API_BASE_URL_PROD || secrets.VITE_API_BASE_URL_STAGING }}
+        VITE_API_TIMEOUT: ${{ secrets.VITE_API_TIMEOUT }}
+        
+        # App Configuration from secrets
+        VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
+        VITE_APP_VERSION: ${{ github.ref == 'refs/heads/main' && secrets.VITE_APP_VERSION_PROD || secrets.VITE_APP_VERSION_STAGING }}
+        VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
+        VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        
+        # Feature Flags from secrets
+        VITE_DEBUG_MODE: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        VITE_LOG_LEVEL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_LOG_LEVEL_PROD || secrets.VITE_LOG_LEVEL_STAGING }}
+        VITE_FEATURE_ADVANCED_REPORTING: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        VITE_FEATURE_BETA_UI: "false"
+        VITE_SHOW_DEV_TOOLS: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        
+        # Optional: Analytics (if configured)
+        VITE_GOOGLE_ANALYTICS_ID: ${{ secrets.VITE_GOOGLE_ANALYTICS_ID }}
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         
     - name: 📊 Check build output
       run: |
@@ -142,7 +160,7 @@ jobs:
         sleep 30
         
         # Health check on production domain
-        HEALTH_URL="https://app.moduly.ai"
+        HEALTH_URL="${{ secrets.VITE_APP_URL }}"
         
         echo "Checking health at: $HEALTH_URL"
         
@@ -159,7 +177,7 @@ jobs:
         fi
         
         # Check if API is accessible (optional)
-        API_URL="https://func-smartbite-reconciliation.azurewebsites.net/api/health"
+        API_URL="${{ github.ref == 'refs/heads/main' && secrets.VITE_API_BASE_URL_PROD || secrets.VITE_API_BASE_URL_STAGING }}/health"
         API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" || echo "000")
         
         if [ "$API_CODE" = "200" ]; then
@@ -189,7 +207,7 @@ jobs:
         if [ "${{ needs.build-and-test.result }}" = "success" ] && [ "${{ needs.deploy.result }}" = "success" ]; then
           echo "✅ **Deployment Status:** SUCCESS" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "🌐 **Live at:** https://app.moduly.ai" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Live at:** ${{ secrets.VITE_APP_URL }}" >> $GITHUB_STEP_SUMMARY
           fi
         else
           echo "❌ **Deployment Status:** FAILED" >> $GITHUB_STEP_SUMMARY

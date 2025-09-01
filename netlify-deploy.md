@@ -7,14 +7,14 @@
 1. **✅ Prerequisites Met:** CI/CD pipeline files already committed to your repository
 2. **🔧 Setup Netlify:** Create account & import your repository  
 3. **🔑 Add Secrets:** Configure GitHub Actions secrets for automated deployments
-4. **🌐 Configure Domain:** Point `app.moduly.ai` to your Netlify site
+4. **🌐 Configure Domain:** Point `smartbiteapp.moduly.ai` to your Netlify site
 5. **🚀 Deploy:** Push to Git → Automatic deployment with health checks
 
 ---
 
 ## 🎯 DEPLOYMENT STATUS: READY TO DEPLOY
 
-Your SmartBite frontend is **FULLY CONFIGURED** with professional CI/CD pipeline and ready for production deployment to `app.moduly.ai`.
+Your SmartBite frontend is **FULLY CONFIGURED** with professional CI/CD pipeline and ready for production deployment to `smartbiteapp.moduly.ai`.
 
 ### ✅ What's Already Configured:
 - **CI/CD Pipeline:** Complete GitHub Actions workflow (`.github/workflows/deploy.yml`)
@@ -36,7 +36,7 @@ Your SmartBite frontend is **FULLY CONFIGURED** with professional CI/CD pipeline
 
 ### Production Setup:
 ```
-GitHub Repository → GitHub Actions → Netlify → app.moduly.ai
+GitHub Repository → GitHub Actions → Netlify → smartbiteapp.moduly.ai
      ↓                    ↓              ↓            ↓
  CI/CD Pipeline    Build & Test    Global CDN    Production App
 ```
@@ -44,7 +44,7 @@ GitHub Repository → GitHub Actions → Netlify → app.moduly.ai
 ### Multi-Site Management:
 ```
 moduly.ai          (Your existing marketing website)
-├── app.moduly.ai  (SmartBite application - NEW SITE)
+├── smartbiteapp.moduly.ai  (SmartBite application - NEW SITE)
 └── Future subdomains (api.moduly.ai, docs.moduly.ai, etc.)
 ```
 
@@ -76,12 +76,12 @@ moduly.ai          (Your existing marketing website)
 3. **Note your temporary URL** (e.g., `https://amazing-name-123456.netlify.app`)
 4. **Test the deployment** - verify SmartBite loads correctly
 
-### Step 2: Configure Custom Domain (app.moduly.ai)
+### Step 2: Configure Custom Domain (smartbiteapp.moduly.ai)
 
 #### 2.1 Add Custom Domain in Netlify
 1. **Go to Site Settings → Domain Management**
-2. **Click "Add custom domain"**
-3. **Enter:** `app.moduly.ai`
+2. **Click "Add a domain you already own"**
+3. **Enter:** `smartbiteapp.moduly.ai`
 4. **Click "Verify"** - shows "not yours yet" (expected)
 5. **Click "Add domain"** anyway
 6. **Note the DNS target** provided (usually `your-site-name.netlify.app`)
@@ -94,7 +94,7 @@ moduly.ai          (Your existing marketing website)
 3. **Add CNAME Record:**
    ```
    Type: CNAME
-   Name: app
+   Name: smartbiteapp
    Value: your-smartbite-site.netlify.app
    TTL: Auto or 3600 (1 hour)
    ```
@@ -103,27 +103,45 @@ moduly.ai          (Your existing marketing website)
 
 **Cloudflare:**
 - DNS → Records → Add record
-- Type: CNAME, Name: `app`, Content: `your-site.netlify.app`
+- Type: CNAME, Name: `smartbiteapp`, Content: `smartbiteapp.netlify.app`
 - Proxy status: OFF (gray cloud) initially
 
 **GoDaddy:**
 - DNS Management → Add Record
-- Type: CNAME, Host: `app`, Points to: `your-site.netlify.app`
+- Type: CNAME, Host: `smartbiteapp`, Points to: `smartbiteapp.netlify.app`
 
 **Namecheap:**
 - Advanced DNS → Add New Record  
-- Type: CNAME Record, Host: `app`, Value: `your-site.netlify.app`
+- Type: CNAME Record, Host: `smartbiteapp`, Value: `smartbiteapp.netlify.app`
 
-#### 2.3 Verify SSL Certificate
-1. **Wait for DNS propagation** (5-30 minutes)
-   - Test: `nslookup app.moduly.ai` should return Netlify's IP
-2. **Check SSL status in Netlify:**
-   - Domain Management should show green "HTTPS" next to app.moduly.ai
-   - If pending, wait 10-20 minutes for automatic SSL provisioning
-3. **Enable "Force HTTPS"** in Domain Management
-   - Redirects http://app.moduly.ai → https://app.moduly.ai
+#### 2.3 Verify Domain Setup
+1. **If using Netlify DNS (like moduly.ai):**
+   - ✅ **Automatic Setup:** Domain and SSL configured automatically
+   - ✅ **No DNS changes needed:** Skip manual CNAME configuration
+   - ✅ **SSL Certificate:** Let's Encrypt automatically provisioned
 
-### Step 3: Configure GitHub Actions CI/CD Pipeline
+2. **If using External DNS Provider (GoDaddy, Cloudflare, etc.):**
+   - Follow the CNAME configuration steps above
+   - Wait for DNS propagation (5-30 minutes)
+   - Test: `nslookup smartbiteapp.moduly.ai` should return Netlify's IP
+
+3. **Test Your Live Site:**
+   - **Visit:** `https://smartbiteapp.moduly.ai`
+   - **Verify SSL:** Green lock in browser
+   - **Test functionality:** Login and core features work
+
+## 🎉 **CONGRATULATIONS! Your Site is Live**
+
+**✅ SmartBite is now successfully deployed at `https://smartbiteapp.moduly.ai`**
+
+Your basic deployment is complete! The following steps are **optional enhancements** for professional development workflows.
+
+---
+
+### Step 3: (Optional) Configure GitHub Actions CI/CD Pipeline
+
+**Current Setup:** Netlify automatically builds when you push to Git
+**Enhancement:** Add advanced CI/CD with testing, health checks, and deployment notifications
 
 #### 3.1 Get Required Secrets
 
@@ -144,21 +162,68 @@ moduly.ai          (Your existing marketing website)
 1. **Go to your GitHub repository**
 2. **Settings → Secrets and variables → Actions**
 3. **Click "New repository secret"**
-4. **Add both secrets:**
-   ```
-   Name: NETLIFY_AUTH_TOKEN
-   Value: nfp_your_token_here
-   
-   Name: NETLIFY_SITE_ID  
-   Value: your-site-id-here
-   ```
+4. **Add ALL required secrets:**
+
+**Deployment Secrets:**
+```
+Name: NETLIFY_AUTH_TOKEN
+Value: nfp_your_token_here
+
+Name: NETLIFY_SITE_ID  
+Value: your-site-id-here
+```
+
+**Environment Configuration Secrets:**
+```
+# API Configuration
+Name: VITE_API_BASE_URL_PROD
+Value: https://func-smartbite-reconciliation.azurewebsites.net/api
+
+Name: VITE_API_BASE_URL_STAGING
+Value: https://func-smartbite-reconciliation-staging.azurewebsites.net/api
+
+Name: VITE_API_TIMEOUT
+Value: 30000
+
+# App Configuration  
+Name: VITE_APP_NAME
+Value: SmartBite Frontend
+
+Name: VITE_APP_VERSION_PROD
+Value: 1.0.0
+
+Name: VITE_APP_VERSION_STAGING
+Value: staging
+
+Name: VITE_APP_DOMAIN
+Value: smartbiteapp.moduly.ai
+
+Name: VITE_APP_URL
+Value: https://smartbiteapp.moduly.ai
+
+# Logging Configuration
+Name: VITE_LOG_LEVEL_PROD
+Value: error
+
+Name: VITE_LOG_LEVEL_STAGING
+Value: info
+
+# Optional Analytics (leave empty if not using)
+Name: VITE_GOOGLE_ANALYTICS_ID
+Value: (leave empty or add GA-XXXXXXXXX)
+
+Name: VITE_SENTRY_DSN
+Value: (leave empty or add your Sentry DSN)
+```
 
 #### 3.3 Enable GitHub Actions
 1. **Go to Actions tab** in your repository
 2. **Enable workflows** if prompted
 3. **Pipeline will run automatically** on your next push
 
-### Step 4: Test Automated Deployment
+### Step 4: (Optional) Test Automated Deployment
+
+**Note:** Only complete this if you set up GitHub Actions in Step 3.
 
 #### 4.1 Trigger Pipeline
 ```bash
@@ -180,7 +245,7 @@ git push origin main
    - 📢 Notify (deployment summary)
 
 #### 4.3 Verify Production Deployment
-1. **Visit https://app.moduly.ai**
+1. **Visit https://smartbiteapp.moduly.ai**
 2. **Verify SSL certificate** (green lock in browser)
 3. **Test core functionality:**
    - Login with demo credentials
@@ -190,11 +255,36 @@ git push origin main
 
 ---
 
-## 🔄 DEVELOPMENT WORKFLOW
+---
+
+## ✅ **DEPLOYMENT COMPLETE**
+
+**Your SmartBite application is now live and accessible at:**
+**🌐 https://smartbiteapp.moduly.ai**
+
+### **What's Working:**
+- ✅ **Live Site:** SmartBite cash reconciliation system
+- ✅ **Custom Domain:** Professional smartbiteapp.moduly.ai URL
+- ✅ **SSL Certificate:** Secure HTTPS with Let's Encrypt
+- ✅ **Automatic Deployments:** Netlify builds on Git push
+- ✅ **Global CDN:** Fast loading worldwide
+
+### **Basic Workflow:**
+```
+Code Changes → Git Push → Netlify Build → Live on smartbiteapp.moduly.ai
+```
+
+---
+
+## 🚀 **OPTIONAL: Advanced Development Workflow**
+
+The following sections are for teams wanting professional CI/CD pipelines with testing and monitoring.
+
+## 🔄 DEVELOPMENT WORKFLOW (Advanced)
 
 ### Branch Strategy (Already Configured)
 ```
-main branch     → Production (app.moduly.ai)
+main branch     → Production (smartbiteapp.moduly.ai)
 develop branch  → Staging (deploy previews)
 feature/* branches → Deploy previews (temporary URLs)
 ```
@@ -264,37 +354,52 @@ git push origin main
 
 ---
 
-## 🔧 ENVIRONMENT MANAGEMENT
+## 🔧 ENVIRONMENT MANAGEMENT (GitHub Secrets)
 
-### Environment Configuration (Already Created)
+### Environment Configuration via GitHub Secrets
+
+**All environment variables are now managed through GitHub Secrets for better security and centralized management.**
 
 #### Production Environment (`main` branch)
-- **Domain:** `app.moduly.ai`
-- **Config:** `.env.production`
-- **API:** `https://func-smartbite-reconciliation.azurewebsites.net/api`
+- **Domain:** `smartbiteapp.moduly.ai` (from `VITE_APP_DOMAIN` secret)
+- **Config:** GitHub Secrets (production values)
+- **API:** `VITE_API_BASE_URL_PROD` secret
 - **Features:** Stable features only, error logging, optimized builds
 
 #### Staging Environment (`develop` branch)
 - **Domain:** Deploy preview URLs
-- **Config:** `.env.staging`
-- **API:** `https://func-smartbite-reconciliation-staging.azurewebsites.net/api`
+- **Config:** GitHub Secrets (staging values)  
+- **API:** `VITE_API_BASE_URL_STAGING` secret
 - **Features:** Beta features enabled, debug logging, development aids
 
-### Environment Variables Reference
-```javascript
-// Production (.env.production)
-VITE_API_BASE_URL=https://func-smartbite-reconciliation.azurewebsites.net/api
-VITE_ENVIRONMENT=production
-VITE_DEBUG_MODE=false
-VITE_LOG_LEVEL=error
+### GitHub Secrets Configuration
 
-// Staging (.env.staging)  
-VITE_API_BASE_URL=https://func-smartbite-reconciliation-staging.azurewebsites.net/api
-VITE_ENVIRONMENT=staging
-VITE_DEBUG_MODE=true
-VITE_LOG_LEVEL=info
-VITE_FEATURE_BETA_UI=true
+**The pipeline automatically uses these secrets based on branch:**
+
+#### Production Secrets (main branch):
 ```
+VITE_API_BASE_URL_PROD → Production API endpoint
+VITE_APP_VERSION_PROD → Production version (1.0.0)
+VITE_LOG_LEVEL_PROD → Error-level logging only
+VITE_DEBUG_MODE → false (hardcoded for security)
+VITE_FEATURE_ADVANCED_REPORTING → false
+```
+
+#### Staging Secrets (develop branch):
+```
+VITE_API_BASE_URL_STAGING → Staging API endpoint  
+VITE_APP_VERSION_STAGING → staging
+VITE_LOG_LEVEL_STAGING → Info-level logging
+VITE_DEBUG_MODE → true (hardcoded for development)
+VITE_FEATURE_ADVANCED_REPORTING → true
+```
+
+### Benefits of GitHub Secrets Management:
+- **🔒 Security:** No sensitive config in repository
+- **🔄 Centralized:** Update config without code changes
+- **🌍 Team Access:** Managed via GitHub repository permissions
+- **📋 Audit Trail:** Changes tracked in GitHub
+- **🚀 Deployment:** Automatic environment switching
 
 ---
 
@@ -380,9 +485,20 @@ VITE_FEATURE_BETA_UI=true
 
 ---
 
-## 🎉 DEPLOYMENT SUMMARY
+## 🎉 FINAL DEPLOYMENT SUMMARY
 
-**Your SmartBite system is now professionally deployed with:**
+**Your SmartBite system is successfully deployed with:**
+
+### **✅ BASIC DEPLOYMENT (Complete):**
+- **Live Application:** https://smartbiteapp.moduly.ai
+- **Secure Access:** HTTPS with automatic SSL certificates
+- **Professional Domain:** Custom subdomain on your domain
+- **Automatic Builds:** Netlify builds on every Git push
+- **Global Performance:** Worldwide CDN for fast loading
+
+### **🚀 ADVANCED FEATURES (Optional):**
+
+If you completed the optional GitHub Actions setup, you also have:
 
 ### ✨ **Modern CI/CD Pipeline**
 - **Automated Deployments:** Git push → automatic deployment
@@ -412,7 +528,7 @@ VITE_FEATURE_BETA_UI=true
 
 ## 🔗 **FINAL RESULT**
 
-**Push code to Git → Automatic deployment to `https://app.moduly.ai`**
+**Push code to Git → Automatic deployment to `https://smartbiteapp.moduly.ai`**
 
 Your SmartBite cash reconciliation system is now live with enterprise-grade deployment infrastructure, automatic testing, and professional monitoring. Every code change flows through a complete CI/CD pipeline ensuring quality and reliability.
 
