@@ -6,6 +6,7 @@
  */
 
 import apiClient from './apiClient.js';
+import { safeError, debugError } from '../utils/logger.js';
 
 export const authService = {
   /**
@@ -66,7 +67,7 @@ export const authService = {
         };
       }
     } catch (error) {
-      console.error('Owner signup failed:', error);
+      safeError('Owner signup failed:', error);
       return {
         success: false,
         error: error.message || 'Signup failed',
@@ -113,7 +114,7 @@ export const authService = {
         };
       }
     } catch (error) {
-      console.error('API authentication failed:', error);
+      safeError('API authentication failed:', error);
       return {
         success: false,
         error: error.message || 'Login failed',
@@ -141,7 +142,7 @@ export const authService = {
         message: 'Logged out successfully'
       };
     } catch (error) {
-      console.warn('Logout API call failed:', error);
+      debugError('Logout API call failed:', error);
       // Even if API fails, consider logout successful for UX
       return {
         success: true,
@@ -182,7 +183,7 @@ export const authService = {
     } catch (error) {
       // 401 errors are expected when not logged in - don't log as errors
       if (!error.message.includes('401')) {
-        console.error('Session status check failed:', error);
+        debugError('Session status check failed:', error);
       }
       return {
         success: false,
@@ -216,7 +217,7 @@ export const authService = {
         throw new Error(response.error || 'Session refresh failed');
       }
     } catch (error) {
-      console.error('Session refresh failed:', error);
+      safeError('Session refresh failed:', error);
       return {
         success: false,
         error: error.message,
@@ -273,7 +274,7 @@ export const authService = {
           }
         }
       } catch (error) {
-        console.warn('Auto session refresh check failed:', error);
+        debugError('Auto session refresh check failed:', error);
       }
     }, 5 * 60 * 1000); // 5 minutes
   },
@@ -286,12 +287,12 @@ export const authService = {
   handleAuthError(error) {
     if (error.message.includes('401')) {
       // Session expired - redirect to login
-      console.warn('Session expired, redirecting to login');
+      debugError('Session expired, redirecting to login');
       window.location.href = '/login';
       return true;
     } else if (error.message.includes('403')) {
       // CSRF token invalid - show error message
-      console.error('CSRF token invalid - please retry the operation');
+      safeError('CSRF token invalid - please retry the operation');
       return true;
     }
     return false;

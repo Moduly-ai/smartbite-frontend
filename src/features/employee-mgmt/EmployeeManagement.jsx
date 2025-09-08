@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { employeeService } from '../../services/employeeService.js';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
 import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
+import { safeError } from '../../utils/logger.js';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -35,7 +36,7 @@ const EmployeeManagement = () => {
         setError(result.message);
       }
     } catch (error) {
-      console.error('Failed to load employees:', error);
+      safeError('Failed to load employees:', error);
       setError('Failed to load employees from server');
     } finally {
       setIsLoading(false);
@@ -83,7 +84,7 @@ const EmployeeManagement = () => {
         setError(formatErrorDisplay(result.message || result.error, 'employee'));
       }
     } catch (error) {
-      console.error('Failed to save employee:', error);
+      safeError('Failed to save employee:', error);
       setError(formatErrorDisplay(error, 'employee'));
     } finally {
       setIsSubmitting(false);
@@ -103,7 +104,7 @@ const EmployeeManagement = () => {
           setError(result.message);
         }
       } catch (error) {
-        console.error('Failed to delete employee:', error);
+        safeError('Failed to delete employee:', error);
         setError('Failed to delete employee');
       }
     }
@@ -128,7 +129,7 @@ const EmployeeManagement = () => {
         setError(result.message);
       }
     } catch (error) {
-      console.error('Failed to update employee access:', error);
+      safeError('Failed to update employee access:', error);
       setError('Failed to update employee access');
     }
   };

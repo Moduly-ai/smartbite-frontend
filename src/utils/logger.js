@@ -36,6 +36,30 @@ export const debugError = (...args) => {
 };
 
 /**
+ * Production-safe console.error - always logs errors even in production
+ * But sanitizes sensitive data
+ * @param {...any} args - Arguments to log
+ */
+export const safeError = (...args) => {
+  const sanitizedArgs = args.map(arg => 
+    typeof arg === 'object' && arg !== null ? sanitizeForLogging(arg) : arg
+  );
+  console.error(...sanitizedArgs);
+};
+
+/**
+ * Production-safe console.warn - always logs warnings even in production
+ * But sanitizes sensitive data
+ * @param {...any} args - Arguments to log
+ */
+export const safeWarn = (...args) => {
+  const sanitizedArgs = args.map(arg => 
+    typeof arg === 'object' && arg !== null ? sanitizeForLogging(arg) : arg
+  );
+  console.warn(...sanitizedArgs);
+};
+
+/**
  * Sanitize sensitive data from objects before logging
  * @param {any} data - Data to sanitize
  * @returns {any} Sanitized data safe for logging

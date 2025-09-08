@@ -5,6 +5,7 @@
 
 import apiClient from './apiClient.js';
 import { env } from '../config/env.js';
+import { safeError, debugLog } from '../utils/logger.js';
 
 export const reconciliationService = {
   /**
@@ -32,7 +33,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Submission failed');
       }
     } catch (error) {
-      console.error('Failed to submit reconciliation:', error);
+      safeError('Failed to submit reconciliation:', error);
       
       return {
         success: false,
@@ -64,7 +65,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Failed to fetch reconciliations');
       }
     } catch (error) {
-      console.error('Failed to fetch reconciliations from API:', error);
+      safeError('Failed to fetch reconciliations from API:', error);
       
       return {
         success: false,
@@ -93,7 +94,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Failed to fetch reconciliation');
       }
     } catch (error) {
-      console.error('Failed to get reconciliation:', error);
+      safeError('Failed to get reconciliation:', error);
       
       return {
         success: false,
@@ -128,7 +129,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Update failed');
       }
     } catch (error) {
-      console.error('Failed to update reconciliation status:', error);
+      safeError('Failed to update reconciliation status:', error);
       
       return {
         success: false,
@@ -203,13 +204,13 @@ export const reconciliationService = {
       };
 
       if (env.ENABLE_LOGGING) {
-        try { console.debug('[Reconciliation] PUT payload', { reconciliationId, body }); } catch {}
+        // Debug logging removed for production security
       }
 
       const response = await apiClient.put(`/reconciliations/${reconciliationId}`, body);
 
       if (env.ENABLE_LOGGING) {
-        try { console.debug('[Reconciliation] PUT response', response); } catch {}
+        // Debug logging removed for production security
       }
 
       if (response.success) {
@@ -222,7 +223,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Update failed');
       }
     } catch (error) {
-      console.error('Failed to update reconciliation:', error);
+      safeError('Failed to update reconciliation:', error);
       return {
         success: false,
         error: error.message,
@@ -250,7 +251,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Approval failed');
       }
     } catch (error) {
-      console.error('Failed to approve reconciliation:', error);
+      safeError('Failed to approve reconciliation:', error);
       
       return {
         success: false,
@@ -282,7 +283,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Rejection failed');
       }
     } catch (error) {
-      console.error('Failed to reject reconciliation:', error);
+      safeError('Failed to reject reconciliation:', error);
       
       return {
         success: false,
@@ -310,7 +311,7 @@ export const reconciliationService = {
         throw new Error(response.error || 'Failed to fetch pending reconciliations');
       }
     } catch (error) {
-      console.error('Failed to fetch pending reconciliations:', error);
+      safeError('Failed to fetch pending reconciliations:', error);
       
       return {
         success: false,

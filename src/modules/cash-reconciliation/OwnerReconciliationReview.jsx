@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { reconciliationService } from '../../services/reconciliationService.js';
+import { safeError, debugError } from '../../utils/logger.js';
 
 const OwnerReconciliationReview = () => {
   const [reconciliations, setReconciliations] = useState([]);
@@ -30,7 +31,7 @@ const OwnerReconciliationReview = () => {
         setError(result.message);
       }
     } catch (error) {
-      console.error('Failed to load reconciliations:', error);
+      safeError('Failed to load reconciliations:', error);
       setError('Failed to load reconciliation data');
     } finally {
       setIsLoading(false);
@@ -153,7 +154,7 @@ const OwnerReconciliationReview = () => {
       
   setShowEditModal(false);
     } catch (error) {
-      console.error('Failed to save edit:', error);
+      safeError('Failed to save edit:', error);
       setSyncStatus({
         type: 'error',
         message: 'Failed to save changes'
@@ -185,7 +186,7 @@ const OwnerReconciliationReview = () => {
         });
       }
     } catch (error) {
-      console.error('Failed to approve reconciliation:', error);
+      safeError('Failed to approve reconciliation:', error);
       setSyncStatus({
         type: 'error',
         message: 'Failed to approve reconciliation'

@@ -4,6 +4,7 @@
  */
 
 import apiClient from './apiClient.js';
+import { safeError, safeWarn, debugError } from '../utils/logger.js';
 
 export const configService = {
   /**
@@ -16,7 +17,7 @@ export const configService = {
       apiClient.setAuthToken(token);
       return true;
     }
-    console.warn('ConfigService: No valid authentication token found');
+    safeWarn('ConfigService: No valid authentication token found');
     return false;
   },
 
@@ -28,7 +29,7 @@ export const configService = {
     try {
       return localStorage.getItem('smartbite-token');
     } catch (error) {
-      console.error('ConfigService: Error reading token:', error);
+      safeError('ConfigService: Error reading token:', error);
     }
     return null;
   },
@@ -137,11 +138,11 @@ export const configService = {
           updatedBy: response.updatedBy
         };
       } else {
-        console.warn('ConfigService: API returned success=false or missing config:', response);
+        safeWarn('ConfigService: API returned success=false or missing config:', response);
         throw new Error(response.error || 'Failed to update configuration');
       }
     } catch (error) {
-      console.error('ConfigService: API update error:', {
+      safeError('ConfigService: API update error:', {
         message: error.message,
         stack: error.stack
       });

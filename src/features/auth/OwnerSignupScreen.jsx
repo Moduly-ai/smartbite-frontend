@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
 import SignupSuccess from './SignupSuccess.jsx';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import { safeError } from '../../utils/logger.js';
 import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
@@ -94,7 +95,7 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
         setError(result.error || 'Signup failed');
       }
     } catch (err) {
-      console.error('Signup error:', err);
+      safeError('Signup error:', err);
       setError(formatErrorDisplay(err, 'signup'));
     } finally {
       setIsLoading(false);

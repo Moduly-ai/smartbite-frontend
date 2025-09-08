@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { authService } from '../../services/authService.js';
 import OwnerSignupScreen from './OwnerSignupScreen.jsx';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
+import { safeError } from '../../utils/logger.js';
 import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
 
 const LoginScreen = ({ onLogin, initialView = 'login', onBackToLanding }) => {
@@ -33,7 +34,7 @@ const LoginScreen = ({ onLogin, initialView = 'login', onBackToLanding }) => {
         setError(result.message || 'Login failed');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      safeError('Login error:', err);
       setError(formatErrorDisplay(err, 'auth'));
     } finally {
       setIsLoading(false);

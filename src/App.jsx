@@ -7,6 +7,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import { authService } from './services/authService';
 import apiClient from './services/apiClient';
+import { safeError, debugError } from './utils/logger.js';
 
 function App() {
   const [userSession, setUserSession] = useState(null);
@@ -31,7 +32,7 @@ function App() {
       } catch (error) {
         // 401 errors are expected when not logged in - don't log as errors
         if (!error.message.includes('401')) {
-          console.error('App: Failed to check session status:', error);
+          safeError('App: Failed to check session status:', error);
         }
         // If session check fails, user will see login screen
       } finally {
@@ -61,7 +62,7 @@ function App() {
     
     // Make logout API call in background - don't wait for it
     authService.logout().catch(error => {
-      console.warn('Background logout API call failed:', error);
+      debugError('Background logout API call failed:', error);
       // User is already logged out locally, so this failure doesn't matter
     });
   };

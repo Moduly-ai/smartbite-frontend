@@ -28,7 +28,10 @@ const requiredEnvVars = ['VITE_API_BASE_URL'];
 
 requiredEnvVars.forEach(envVar => {
   if (!import.meta.env[envVar]) {
-    console.warn(`Warning: ${envVar} environment variable is not set`);
+    // Only warn in development - production should have all required vars set
+    if (import.meta.env.DEV) {
+      console.warn(`Warning: ${envVar} environment variable is not set`);
+    }
   }
 });
 

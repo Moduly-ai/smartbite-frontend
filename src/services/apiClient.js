@@ -5,6 +5,7 @@
  */
 
 import { env } from '../config/env.js';
+import { safeError, debugError, debugWarn } from '../utils/logger.js';
 
 class ApiClient {
   constructor() {
@@ -91,7 +92,7 @@ class ApiClient {
           if (response.status >= 400 && response.status < 500) {
             // Don't log 401 errors for session status - they're expected when not logged in
             if (!(response.status === 401 && (endpoint === '/session/status' || endpoint === '/api/auth/status' || endpoint === '/api/auth/verify'))) {
-              console.error('API Client Error:', errorText);
+              safeError('API Client Error:', errorText);
             }
             // If unauthorized, clear token client-side to force re-auth
             if (response.status === 401) {
@@ -102,7 +103,7 @@ class ApiClient {
           
           // Retry for server errors (5xx) if attempts remain
           if (attempt < this.retryAttempts) {
-            console.warn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, errorText);
+            debugWarn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, errorText);
             await this.sleep(this.retryDelay * (attempt + 1));
             continue;
           }
@@ -128,11 +129,11 @@ class ApiClient {
         
         // Don't retry if error is not retryable or no attempts left
         if (!this.isRetryableError(error) || attempt >= this.retryAttempts) {
-          console.error('API request failed:', error);
+          safeError('API request failed:', error);
           throw error;
         }
         
-        console.warn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, error.message);
+        debugWarn(`API request failed (attempt ${attempt + 1}/${this.retryAttempts + 1}):`, error.message);
         await this.sleep(this.retryDelay * (attempt + 1));
       }
     }
@@ -265,7 +266,7 @@ class ApiClient {
       }
       throw new Error('Failed to get CSRF token');
     } catch (error) {
-      console.error('CSRF token request failed:', error);
+      safeError('CSRF token request failed:', error);
       throw error;
     }
   }
@@ -308,7 +309,7 @@ class ApiClient {
     } catch (error) {
       // 401 errors are expected when not logged in - don't log as errors
       if (!error.message.includes('401')) {
-        console.error('Session status check failed:', error);
+        debugError('Session status check failed:', error);
       }
       return { success: false, authenticated: false };
     }
@@ -322,7 +323,7 @@ class ApiClient {
     try {
       return await this.post('/session/refresh');
     } catch (error) {
-      console.error('Session refresh failed:', error);
+      safeError('Session refresh failed:', error);
       throw error;
     }
   }

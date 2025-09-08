@@ -5,6 +5,7 @@ import RegisterComponent from '../../components/shared/RegisterComponent.jsx';
 import PosTerminalComponent from '../../components/shared/PosTerminalComponent.jsx';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
 import LoadingSpinner from '../../components/shared/LoadingSpinner.jsx';
+import { safeError, debugError } from '../../utils/logger.js';
 
 const EmployeeReconciliation = ({ user }) => {
   // ALL STATE AND HOOKS MUST BE DECLARED FIRST - BEFORE ANY CONDITIONAL RETURNS
@@ -145,7 +146,7 @@ const EmployeeReconciliation = ({ user }) => {
         setConfig(configToUse);
         setIsLoadingConfig(false);
       } catch (error) {
-        console.error('Failed to load config:', error);
+        safeError('Failed to load config:', error);
         setConfig(null);
         setIsLoadingConfig(false);
       }
@@ -163,7 +164,7 @@ const EmployeeReconciliation = ({ user }) => {
           const parsed = JSON.parse(savedData);
           setFormData(prev => ({ ...prev, ...parsed }));
         } catch (e) {
-          console.error('Failed to parse saved data:', e);
+          debugError('Failed to parse saved data:', e);
         }
       }
     }
@@ -376,7 +377,7 @@ const EmployeeReconciliation = ({ user }) => {
         throw new Error(result.message || result.error || 'Submission failed');
       }
     } catch (error) {
-      console.error('Submission error:', error);
+      safeError('Submission error:', error);
       setSubmitStatus({ 
         type: 'error', 
         message: formatErrorDisplay(error, 'reconciliation') 

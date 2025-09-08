@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { configService } from '../../services/configService.js';
 import { formatErrorDisplay, getLoadingMessage } from '../../utils/errorMessages.js';
 import LoadingSpinner from '../shared/LoadingSpinner.jsx';
+import { safeError } from '../../utils/logger.js';
 
 const ConfigurationSettings = ({ user, onClose }) => {
   const [config, setConfig] = useState(null);
@@ -163,7 +164,7 @@ const ConfigurationSettings = ({ user, onClose }) => {
           setErrors({ general: 'Failed to load configuration' });
         }
       } catch (error) {
-        console.error('Failed to load configuration:', error);
+        safeError('Failed to load configuration:', error);
         setErrors({ general: 'Failed to load configuration' });
       } finally {
         setIsLoading(false);
@@ -329,7 +330,7 @@ const ConfigurationSettings = ({ user, onClose }) => {
         setSaveStatus({ type: 'error', message: result.message });
       }
     } catch (error) {
-      console.error('Failed to save configuration:', error);
+      safeError('Failed to save configuration:', error);
       setSaveStatus({ type: 'error', message: formatErrorDisplay(error, 'config') });
     } finally {
       setSaving(false);

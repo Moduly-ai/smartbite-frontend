@@ -4,6 +4,7 @@
  */
 
 import apiClient from './apiClient.js';
+import { safeError } from '../utils/logger.js';
 
 export const employeeService = {
   /**
@@ -25,7 +26,7 @@ export const employeeService = {
         throw new Error(response.error || 'Failed to fetch employees');
       }
     } catch (error) {
-      console.error('Failed to get employees:', error);
+      safeError('Failed to get employees:', error);
       
       return {
         success: false,
@@ -54,7 +55,7 @@ export const employeeService = {
         throw new Error(response.error || 'Employee not found');
       }
     } catch (error) {
-      console.error('Failed to get employee:', error);
+      safeError('Failed to get employee:', error);
       
       return {
         success: false,
@@ -108,7 +109,7 @@ export const employeeService = {
         throw new Error(response.error || response.message || 'Failed to create employee');
       }
     } catch (error) {
-      console.error('Failed to create employee:', error);
+      safeError('Failed to create employee:', error);
       
       return {
         success: false,
@@ -158,7 +159,7 @@ export const employeeService = {
         throw new Error(response.error || 'Failed to update employee');
       }
     } catch (error) {
-      console.error('Failed to update employee:', error);
+      safeError('Failed to update employee:', error);
       
       return {
         success: false,
@@ -186,7 +187,7 @@ export const employeeService = {
         throw new Error(response.error || 'Failed to delete employee');
       }
     } catch (error) {
-      console.error('Failed to delete employee:', error);
+      safeError('Failed to delete employee:', error);
       
       return {
         success: false,
