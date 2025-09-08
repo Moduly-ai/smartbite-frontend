@@ -17,7 +17,8 @@ export const env = {
   PROD: import.meta.env.PROD,
   DEV: import.meta.env.DEV,
   
-  // Production Configuration
+  // Debug and Logging Configuration
+  DEBUG_MODE: import.meta.env.VITE_DEBUG_MODE !== 'false',
   ENABLE_LOGGING: import.meta.env.VITE_ENABLE_LOGGING !== 'false',
   SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
 };

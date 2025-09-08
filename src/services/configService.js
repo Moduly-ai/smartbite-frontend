@@ -98,7 +98,7 @@ export const configService = {
    * @returns {Promise<Object>} Update result
    */
   async updateSystemConfig(config) {
-    console.log('ConfigService: updateSystemConfig called with config:', config);
+    // Debug logging removed for production security
     
     // Ensure we have authentication
     if (!this.ensureAuthenticated()) {
@@ -123,14 +123,11 @@ export const configService = {
     const cleanConfig = this.cleanConfigForSubmission(config);
     
     try {
-      console.log('ConfigService: Making authenticated PUT request to /config/system');
-      console.log('ConfigService: Request body:', JSON.stringify(cleanConfig, null, 2));
-      
-  const response = await apiClient.put('/config/system', cleanConfig);
-      console.log('ConfigService: PUT response received:', response);
+      // Making authenticated PUT request to /config/system
+      const response = await apiClient.put('/config/system', cleanConfig);
       
       if (response.success && response.config) {
-        console.log('ConfigService: API update successful, received updated config');
+        // API update successful, received updated config
         
         return {
           success: true,
@@ -215,7 +212,7 @@ export const configService = {
    * @returns {Promise<Object>} Configuration data
    */
   async getFreshConfig() {
-    console.log('ConfigService: getFreshConfig called - getting latest from API');
+    // Getting fresh config from API
     return this.getSystemConfig();
   },
 

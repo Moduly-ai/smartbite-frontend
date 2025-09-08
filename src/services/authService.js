@@ -268,7 +268,7 @@ export const authService = {
           
           // Refresh if session is 50+ minutes old (10 minutes before expiry)
           if (sessionAgeMinutes >= 50) {
-            console.log('Auto-refreshing session before expiry');
+            // Auto-refreshing session before expiry
             await this.refreshSession();
           }
         }

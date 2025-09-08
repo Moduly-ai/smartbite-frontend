@@ -84,12 +84,8 @@ const OwnerSignupScreen = ({ onSignupSuccess, onBackToLogin }) => {
     setIsLoading(true);
     setError('');
 
-    console.log('Starting signup with data:', formData); // Debug log
-
     try {
       const result = await authService.ownerSignup(formData);
-      
-      console.log('Signup result:', result); // Debug log
       
       if (result.success) {
         // Show success screen with credentials; defer continuation until user clicks
